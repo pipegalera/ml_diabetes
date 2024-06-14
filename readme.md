@@ -5,7 +5,7 @@
 
 The purpose of this experiment is:
 
-1) Replicating the scarse literature on the topic.
+1) Replicating the scarce literature on the topic.
 
 2) Compare the performance metrics of different non-parametric models predicting Diabetes using public [NHANES data](https://www.cdc.gov/nchs/index.htm).
 
@@ -25,7 +25,7 @@ The purpose of this experiment is:
 
 *reverse-chronological for current relevance*
 
-### Matabuena et al. (2024)
+### 1.1 Matabuena et al. (2024)
 
 🚧 Preliminary notes:
 
@@ -34,12 +34,14 @@ The purpose of this experiment is:
 - Race was mentioned but not added in any model.
 - It would be good to see overfitting the training data to make sure the problem is solvable in the first place by the network
 - Not specified:
+
       - Benchmark
       - Why NNs and not other non-parametric methods that [are usually better for tabular data](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9998482).
       - Why they choose the specific NN architecture (rather generic?)
       - Number of epochs. Needs a Train/Val viz at least?
       ![](https://i.sstatic.net/qBhX6.png)
-      - Why they choose that CV strategy? I - Why only using data from 2011 to 2014?
+      - Why they choose that CV strategy?
+      - Why only using data from 2011 to 2014?
 
 - Cross-Entropy [is not a metric](https://sebastianraschka.com/faq/docs/proper-metric-cross-entropy.html). Metrics are functions that measures quality of the model prediction. E.g. It can be the case that the loss change but identify the same number of true labels.
 
@@ -50,7 +52,7 @@ The purpose of this experiment is:
 - Need a basic standarized methodology to ensure that methods are on a somewhat level playing field - E.g.NNs performace bastly depend on number of layers and epochs trained on.
 - It cannot be compared a deep NN trained for days with a 5-min trainned default XGB. It sounds obvious but it can be the case as the papers do not specify (e.g. Dihn et al., 2019). Maybe the reviwers at the time were not familiar with Neural Networks.
 
-### Summary of Models to compare
+### 2.1 Summary of Models to compare
 
 *Incomplete*
 
@@ -73,7 +75,7 @@ Ensemble Learning:
 
 7. Ensemble
 
-##  Tree-based Models.
+## 2.1 Tree-based Models
 
 ### CatBoost
 
@@ -85,7 +87,7 @@ Ensemble Learning:
 - Paper: [XGBoost: A Scalable Tree Boosting System](https://arxiv.org/abs/1603.02754)
 - Code: https://xgboost.readthedocs.io/en/stable/
 
-## Deel Learning Models.
+## 2.2 Deep Learning Models
 
 ### TabPFN
 
