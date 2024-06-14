@@ -16,19 +16,19 @@ The purpose of this experiment is comparing the performance metrics of different
 ## Model Comparison
 
 Bechmarks:
-1) Logistic Regression.
-2) Simple Neural Network.
+1. Logistic Regression.
+2. Simple Neural Network.
 
 Tree Models:
-2) CatBoost
-3) XGBoost
+3. CatBoost
+4. XGBoost
 
 Deep Learning Models:
-4) TabPFN
-5) TabNet
+5. TabPFN
+6. TabNet
 
 Ensemble Learning:
-6) Ensemble
+7. Ensemble
 
 ##  Tree-based Models.
 
