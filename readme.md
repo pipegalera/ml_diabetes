@@ -7,7 +7,7 @@ The purpose of this experiment is:
 
 1) Replicating the scarce literature on the topic.
 
-2) Compare the performance metrics of different non-parametric models predicting Diabetes using public medical data from:
+2) Compare the ability of non-parametric models predicting Diabetes based on survey and lab public medical data from different sources:
 
 - [NHANES](https://www.cdc.gov/nchs/index.htm). US Population.
 - [DRYAD](https://doi.org/10.5061/dryad.ft8750v). China Population.
