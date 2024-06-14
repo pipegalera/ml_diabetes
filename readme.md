@@ -75,28 +75,28 @@ Ensemble Learning:
 
 7. Ensemble
 
-## 2.1 Tree-based Models
+### 2.2 Tree-based Models
 
-### CatBoost
+#### CatBoost
 
 - Paper: [CatBoost: unbiased boosting with categorical features](https://arxiv.org/abs/1706.09516)
 - Code: https://github.com/catboost/catboost
 
-### XGBoost
+#### XGBoost
 
 - Paper: [XGBoost: A Scalable Tree Boosting System](https://arxiv.org/abs/1603.02754)
 - Code: https://xgboost.readthedocs.io/en/stable/
 
-## 2.2 Deep Learning Models
+### 2.2 Deep Learning Models
 
-### TabPFN
+#### TabPFN
 
 - Paper: [TabPFN: A Transformer That Solves Small Tabular Classification Problems in a Second](https://arxiv.org/abs/2207.01848)
 - Code: https://github.com/automl/TabPFN
 
 "it doesn’t require training, hyperparameter tuning, or cross-validation – it only requires a single forward pass on a new training set. The caveat is that it requires synthetic datasets for the prior." (https://sebastianraschka.com/blog/2022/deep-learning-for-tabular-data.html)
 
-### TabNet
+#### TabNet
 
 - Paper: [TabNet: Attentive Interpretable Tabular Learning
 ](https://arxiv.org/abs/1908.07442)
