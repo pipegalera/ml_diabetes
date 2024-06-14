@@ -1,11 +1,15 @@
 
-🚧🚧🚧 --- WIP --- 🚧🚧🚧
+🚧🚧🚧 --- Work In Progress --- 🚧🚧🚧
 
 # Deep Neural Nets & Gradient Boosted Trees for Diabetes Prediction
 
-The purpose of this experiment is comparing the performance metrics of different non-parametric models predicting Diabetes using public [NHANES data](https://www.cdc.gov/nchs/index.htm).
+The purpose of this experiment is:
 
-## Literature
+1) Replicating the scarse literature on the topic.
+
+2) Compare the performance metrics of different non-parametric models predicting Diabetes using public [NHANES data](https://www.cdc.gov/nchs/index.htm).
+
+## Literature on the topic
 
 - Dinh et al. (2019): [A data-driven approach to predicting diabetes and cardiovascular disease with machine learning](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-019-0918-5)
 - Cahn et al. (2020): [Prediction of progression from pre-diabetes to diabetes: Development and validation of a machine learning model](https://onlinelibrary.wiley.com/doi/10.1002/dmrr.3252)
@@ -13,12 +17,47 @@ The purpose of this experiment is comparing the performance metrics of different
 - Matabuena et al. (2024): [Deep Learning Framework with Uncertainty Quantification for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American Population
 ](https://arxiv.org/abs/2403.19752)
 
-## Model Comparison
+🚧 Preliminary notes:
+
+- What blood pressure readings are taking (1rst, 2nd, 3rd) ?
+
+## 1. Replication
+
+*reverse-chronological for current relevance*
+
+### Matabuena et al. (2024)
+
+🚧 Preliminary notes:
+
+- **The paper uploaded to arxiv is an old pre-print, the points below will be probably addressed in the final journal submission**
+
+- Race was mentioned but not added in any model.
+- It would be good to see overfitting the training data to make sure the problem is solvable in the first place by the network
+- Not specified:
+      - Benchmark
+      - Why NNs and not other non-parametric methods that [are usually better for tabular data](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9998482).
+      - Why they choose the specific NN architecture (rather generic?)
+      - Number of epochs. Needs a Train/Val viz at least?
+      ![](https://i.sstatic.net/qBhX6.png)
+      - Why they choose that CV strategy? I - Why only using data from 2011 to 2014?
+
+- Cross-Entropy [is not a metric](https://sebastianraschka.com/faq/docs/proper-metric-cross-entropy.html). Metrics are functions that measures quality of the model prediction. E.g. It can be the case that the loss change but identify the same number of true labels.
+
+## 2. Model Comparison
+
+🚧 Preliminary notes:
+
+- Need a basic standarized methodology to ensure that methods are on a somewhat level playing field - E.g.NNs performace bastly depend on number of layers and epochs trained on.
+- It cannot be compared a deep NN trained for days with a 5-min trainned default XGB. It sounds obvious but it can be the case as the papers do not specify (e.g. Dihn et al., 2019). Maybe the reviwers at the time were not familiar with Neural Networks.
+
+### Summary of Models to compare
+
+*Incomplete*
 
 Bechmarks:
 
-1. Logistic Regression.
-2. Simple Neural Network.
+1. Logistic Regression (simple para).
+2. 32-16-8 Neural Network (simple non-para).
 
 Tree Models:
 
