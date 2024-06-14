@@ -7,7 +7,10 @@ The purpose of this experiment is:
 
 1) Replicating the scarce literature on the topic.
 
-2) Compare the performance metrics of different non-parametric models predicting Diabetes using public [NHANES data](https://www.cdc.gov/nchs/index.htm).
+2) Compare the performance metrics of different non-parametric models predicting Diabetes using public medical data from:
+
+- [NHANES](https://www.cdc.gov/nchs/index.htm). US Population.
+- [DRYAD](https://doi.org/10.5061/dryad.ft8750v). China Population.
 
 ## Literature on the topic
 
@@ -50,7 +53,7 @@ The purpose of this experiment is:
 🚧 Preliminary notes:
 
 - Need a basic standarized methodology to ensure that methods are on a somewhat level playing field - E.g.NNs performace bastly depend on number of layers and epochs trained on.
-- It cannot be compared a deep NN trained for days with a 5-min trainned default XGB. It sounds obvious but it can be the case as the papers do not specify (e.g. Dihn et al., 2019). Maybe the reviwers at the time were not familiar with Neural Networks.
+- It cannot be compared a deep NN trained for days with a 5-min trainned default XGB. It sounds obvious but it can be the case as the papers do not specify how train the models or for how long (e.g. Dihn et al., 2019). Maybe the reviwers at the time were not familiar with Neural Networks.
 
 ### 2.1 Summary of Models to compare
 
