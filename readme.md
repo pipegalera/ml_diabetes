@@ -38,13 +38,14 @@ The purpose of this experiment is:
 - It would be good to see overfitting the training data to make sure the problem is solvable in the first place by the network
 - Not specified:
 
-      - Benchmark
+      - Benchmark.
       - Why NNs and not other non-parametric methods that [are usually better for tabular data](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9998482).
       - Why they choose the specific NN architecture (rather generic?)
       - Number of epochs. Needs a Train/Val viz at least?
       ![](https://i.sstatic.net/qBhX6.png)
-      - Why they choose that CV strategy?
-      - Why only using data from 2011 to 2014?
+      - Why they choose that CV strategy.
+      - Why only using data from 2011 to 2014.
+      - How they've created the 5011 cohort used for the analysis.
 
 - Cross-Entropy [is not a metric](https://sebastianraschka.com/faq/docs/proper-metric-cross-entropy.html). Metrics are functions that measures quality of the model prediction. E.g. It can be the case that the loss change but identify the same number of true labels.
 
