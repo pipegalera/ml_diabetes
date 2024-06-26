@@ -17,7 +17,7 @@ def get_raw_nhanes(year, DATA_PATH = "data/NHANES/raw_data/"):
 
   return df
 
-def clean_nhanes(nhanes_raw_data):
+def prep_nhanes(nhanes_raw_data):
 
   df = nhanes_raw_data.copy()
 
@@ -33,18 +33,6 @@ def clean_nhanes(nhanes_raw_data):
                       "LBXGH", "LBDGLUSI", "DIQ010",]
 
   df = df[relevant_columns]
-
-  # Replace
-  df['DIQ010'] = df['DIQ010'].replace({1:"Yes",
-                                       2:"No",
-                                       3:"Borderline",
-                                       7:"Refused",
-                                       9:"Don't know",
-                                      })
-
-  df['RIAGENDR'] = df['RIAGENDR'].replace({1:"Male",
-                                           2:"Female",
-                                          })
 
   rename_cols_dict = {
       "SEQN":"Person ID",
