@@ -30,7 +30,7 @@ The purpose of this experiment is:
 
 To download `NHANES` data, I've created `nhanes_data_downloader.py`.:
 
-[nhanes_data_downloader.py](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/NHANES_downloader.png)
+![nhanes_data_downloader.py](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/NHANES_downloader.png)
 
 The selection of the variables and time-frames used to predict diabetes depend of the paper.
 
