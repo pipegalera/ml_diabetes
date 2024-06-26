@@ -26,7 +26,61 @@ The purpose of this experiment is:
 
 ## 1. Replication
 
-*reverse-chronological for current relevance*
+### Data
+
+To download `NHANES` data, I've created `nhanes_data_downloader.py`.:
+
+[nhanes_data_downloader.py]("/images/NHANES_downloader.png")
+
+The selection of the variables and time-frames used to predict diabetes depend of the paper.
+
+- Dinh et al. (2019)
+
+    i) 123 (unknown) variables from NHANES data from 1999-2014.
+    ii) 168 (unknown) variables from NHANES data from 2003-2014
+
+- Cahn et al. (2020)
+
+Private data from [The Health Improvement Network (THIN)](https://www.the-health-improvement-network.com/),[IQVIA Canada EMR Primary Care Data](https://www.iqvia.com/solutions/real-world-evidence/real-world-data-and-insights), and [Morris Kahn Maccabi Health Data Science Institut](https://www.ksminnovation.com/about/)
+
+  - Variables: `age`, `gender`, `BMI`, `HbA1c`, `glucose`.
+
+- Wu et al. (2021)
+
+- Matabuena et al. (2024)
+
+
+### Diabestes definition
+
+Even that the definition of the label "Diabetes" slightly change in the papers, they is consistent with the
+[American Diabetes Association (see Table 3)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2797383/table/T3/).
+
+The small variations depended on the data available.
+
+- Dinh et al. (2019)
+
+  i) Glucose >= 126 mg/dL. or;
+  ii) “Yes” to the question “Have you ever been told by a doctor that you have diabetes?”
+
+- Cahn et al. (2020)
+
+  i) Glucose ≥126 mg/dL within 2 years or;
+  ii) HbA1c ≥ 6.5% within 2 years or;
+  iii) Glucose ≥200 mg/dL in a single measurement or;
+  iv) Diagnosed Diabetes or;
+  v) Initiating any glucose lowering agent other than metformin (which is often prescribed to pre-diabetic individuals) without prior fulfilment of the diabetes glycaemic criteria.
+
+- Wu et al. (2021)
+
+  i) Glucose ≥126 mg/dL or;
+  ii) Diagnosed Diabetes.
+
+- Matabuena et al. (2024)
+
+i) Glucose ≥126 mg/dL or;
+ii) HbA1c ≥ 6.5% or;
+iii) Diagnosed Diabetes.
+
 
 ### 1.1 Matabuena et al. (2024)
 
