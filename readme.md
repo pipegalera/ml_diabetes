@@ -32,87 +32,24 @@ To download `NHANES` data, I've created `nhanes_data_downloader.py`.:
 
 ![nhanes_data_downloader.py](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/NHANES_downloader.png)
 
-The selection of the variables and time-frames used to predict diabetes depend of the paper.
-
-- Dinh et al. (2019)
-
-    i) 123 (unknown) variables from NHANES data from 1999-2014.
-    ii) 168 (unknown) variables from NHANES data from 2003-2014
-
-- Cahn et al. (2020)
-
-Private data from [The Health Improvement Network (THIN)](https://www.the-health-improvement-network.com/),[IQVIA Canada EMR Primary Care Data](https://www.iqvia.com/solutions/real-world-evidence/real-world-data-and-insights), and [Morris Kahn Maccabi Health Data Science Institut](https://www.ksminnovation.com/about/)
-
-  - Variables: `age`, `gender`, `BMI`, `HbA1c`, `glucose`.
-
-- Wu et al. (2021)
-
-- Matabuena et al. (2024)
-
+The selection of the variables and time-frames used to predict diabetes depend of the paper (see more in each paper folder).
 
 ### Diabestes definition
 
 Even that the definition of the label "Diabetes" slightly change in the papers, they is consistent with the
 [American Diabetes Association (see Table 3)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2797383/table/T3/).
 
-The small variations depended on the data available.
-
-- Dinh et al. (2019)
-
-  i) Glucose >= 126 mg/dL. or;
-  ii) “Yes” to the question “Have you ever been told by a doctor that you have diabetes?”
-
-- Cahn et al. (2020)
-
-  i) Glucose ≥126 mg/dL within 2 years or;
-  ii) HbA1c ≥ 6.5% within 2 years or;
-  iii) Glucose ≥200 mg/dL in a single measurement or;
-  iv) Diagnosed Diabetes or;
-  v) Initiating any glucose lowering agent other than metformin (which is often prescribed to pre-diabetic individuals) without prior fulfilment of the diabetes glycaemic criteria.
-
-- Wu et al. (2021)
-
-  i) Glucose ≥126 mg/dL or;
-  ii) Diagnosed Diabetes.
-
-- Matabuena et al. (2024)
-
-i) Glucose ≥126 mg/dL or;
-ii) HbA1c ≥ 6.5% or;
-iii) Diagnosed Diabetes.
-
-
-### 1.1 Matabuena et al. (2024)
-
-🚧 Preliminary notes:
-
-- **The paper uploaded to arxiv is an old pre-print, the points below will be probably addressed in the final journal submission**
-
-- Race was mentioned but not added in any model.
-- It would be good to see overfitting the training data to make sure the problem is solvable in the first place by the network
-- Not specified:
-
-      - Benchmark.
-      - Why NNs and not other non-parametric methods that [are usually better for tabular data](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9998482).
-      - Why they choose the specific NN architecture (rather generic?)
-      - Number of epochs. Needs a Train/Val viz at least?
-      ![](https://i.sstatic.net/qBhX6.png)
-      - Why they choose that CV strategy.
-      - Why only using data from 2011 to 2014.
-      - How they've created the 5011 cohort used for the analysis.
-
-- Cross-Entropy [is not a metric](https://sebastianraschka.com/faq/docs/proper-metric-cross-entropy.html). Metrics are functions that measures quality of the model prediction. E.g. It can be the case that the loss change but identify the same number of true labels.
-
 ## 2. Model Comparison
 
 🚧 Preliminary notes:
 
-- Need a basic standarized methodology to ensure that methods are on a somewhat level playing field - E.g.NNs performace bastly depend on number of layers and epochs trained on.
-- It cannot be compared a deep NN trained for days with a 5-min trainned default XGB. It sounds obvious but it can be the case as the papers do not specify how train the models or for how long (e.g. Dihn et al., 2019). Maybe the reviwers at the time were not familiar with Neural Networks.
+- Need a basic standarized methodology to ensure that Deep Learning and Machine Learning methods are on a somewhat level playing field - E.g.NNs performace bastly depend on number of layers and epochs trained on.
+
+It cannot be compared a deep NN trained for days with a 5-min trainned default XGB. It sounds obvious but it can be the case as the papers do not specify how train the models or for how long. The seeds are a mystery. Maybe the reviwers at the time were not familiar with Neural Networks.
 
 ### 2.1 Summary of Models to compare
 
-*Incomplete*
+*TBD - Incomplete*
 
 Bechmarks:
 
