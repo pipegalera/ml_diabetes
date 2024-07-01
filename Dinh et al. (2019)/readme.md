@@ -20,8 +20,8 @@ Best scores:
 
 [NHANES](https://www.cdc.gov/nchs/index.htm).
 
-i) 123 (unknown) variables from NHANES data from 1999-2014.
-ii) 168 (unknown) variables from NHANES data from 2003-2014
+- 123 (unspecified) variables from NHANES data from 1999-2014.
+- 168 (unspecified) variables from NHANES data from 2003-2014
 
 ![Tables from Dinh et al. 2019](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/dinh_2019_Table4.png)
 
@@ -41,20 +41,20 @@ ii) 168 (unknown) variables from NHANES data from 2003-2014
 
 `Diabetes = 1` if
 
-i) Glucose >= 126 mg/dL. OR;
-ii) “Yes” to the question “Have you ever been told by a doctor that you have diabetes?”
+- Glucose >= 126 mg/dL. OR;
+- "Yes" to the question "Have you ever been told by a doctor that you have diabetes?"
 
 `undiagnosed diabetes = 1` if
 
-i) Glucose >= 126 mg/dL. AND;
-ii) "No" to the question "Have you ever been told by a doctor that you have diabetes?" and had a blood glucose level greater than or equal
+- Glucose >= 126 mg/dL. AND;
+- "No" to the question "Have you ever been told by a doctor that you have diabetes?" and had a blood glucose level greater than or equal
 
 `pre diabetes = 1` if
 
-i) Glucose 125 >= 100 mg/dL
+- Glucose 125 >= 100 mg/dL
 
 `CVD = 1` if
 
-i) "Yes" to any of the the questions "Have you ever been told by a doctor that you had congestive heart failure, coronary heart disease, a heart attack, or a stroke?”
+- "Yes" to any of the the questions "Have you ever been told by a doctor that you had congestive heart failure, coronary heart disease, a heart attack, or a stroke?"
 
 ![Tables from Dinh et al. 2019](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/dinh_2019_Table1_3.png)
