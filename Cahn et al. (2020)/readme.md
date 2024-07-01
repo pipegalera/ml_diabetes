@@ -1,4 +1,4 @@
-# Prediction of progression from pre-diabetes to diabetes: Development and validation of a machine learning model
+# Prediction of progression from pre-diabetes to diabetes: Development and validation of a machine learning model (2020)
 
 ## Brief Summary
 
