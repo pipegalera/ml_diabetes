@@ -4,7 +4,7 @@
 
 https://wwwn.cdc.gov/nchs/nhanes/default.aspx
 
-## Variables
+## Important Variables Summary 
 
 - "SEQN" - Respondent sequence number (all files index)
 

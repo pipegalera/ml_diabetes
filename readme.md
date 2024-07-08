@@ -26,15 +26,15 @@ The purpose of this experiment is:
 
 ## 1. Replication
 
-### Data
+### NHANES Data Backfill
 
-To download `NHANES` data, I've created `nhanes_data_downloader.py`.:
+To download `NHANES` data, I've created `nhanes_data_downloader.py`:
 
 ![nhanes_data_downloader.py](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/NHANES_downloader.png)
 
 The selection of the variables and time-frames used to predict diabetes depend of the paper (see more in each paper folder).
 
-### Diabestes definition
+### Diabetes definition
 
 Even that the definition of the label "Diabetes" slightly change in the papers, they is consistent with the
 [American Diabetes Association (see Table 3)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2797383/table/T3/).
