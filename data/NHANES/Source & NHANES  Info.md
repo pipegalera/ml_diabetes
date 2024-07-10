@@ -8,19 +8,19 @@ https://wwwn.cdc.gov/nchs/nhanes/default.aspx
 
 - "SEQN" - Respondent sequence number (all files index)
 
-### Demographics Data - Demographic Variables & Sample Weights (DEMO_G/H.XPT)
+### Demographics Data - Demographic Variables & Sample Weights (DEMO*.XPT)
 
 - "RIDAGEYR" - Age in years at screening
 - "RIAGENDR" - Gender
 
-### Examination Data - Body Measures (BMX_G/H.XPT)
+### Examination Data - Body Measures (BMX*.XPT)
 
 - "BMXWT" - Weight (kg)
 - "BMXHT" - Standing Height (cm)
 - "BMXBMI" - Body Mass Index (kg/m**2)
 - "BMXWAIST" - Waist Circumference (cm)
 
-### Examination Data - Blood Pressure (BPX_G.XPT)
+### Examination Data - Blood Pressure (BPX*.XPT)
 
 - "BPXDI1" - Diastolic: Diastolic: Blood pressure (first reading) mm Hg
 - "BPXDI2" - Diastolic: Diastolic: Blood pressure (second reading) mm Hg
@@ -34,19 +34,19 @@ https://wwwn.cdc.gov/nchs/nhanes/default.aspx
 
 - "BPXPLS" - 60 sec. pulse (30 sec. pulse * 2)
 
-### Laboratory Data - Cholesterol - LDL & Triglycerides (TRIGLY_G/H.XPT)
+### Laboratory Data - Cholesterol - LDL & Triglycerides (TRIGLY*.XPT)
 
 - "LBDTRSI" - Triglyceride (mmol/L)
 - "LBDLDL" - LDL-cholesterol (mmol/dL)
 
-### Laboratory Data - Glycohemoglobin (GHB_G/H.XPT)
+### Laboratory Data - Glycohemoglobin (GHB*.XPT)
 
 - "LBXGH" - Glycohemoglobin (%)
 
-### Laboratory Data - Plasma Fasting Glucose & Insulin (GLU_G/H.XPT)
+### Laboratory Data - Plasma Fasting Glucose & Insulin (GLU*.XPT)
 
 - "LBDGLUSI" - Fasting Glucose (mmol/L)
 
-### Questionnaire Data -  - Diabetes	(DIQ_G/H.XPT)
+### Questionnaire Data -  - Diabetes	(DIQ*.XPT)
 
 - "DIQ010" - Doctor told you have diabetes
