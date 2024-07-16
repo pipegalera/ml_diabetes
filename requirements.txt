@@ -2,4 +2,4 @@ pyarrow
 pandas
 numpy
 lxml
-xport
+pyreadstat
