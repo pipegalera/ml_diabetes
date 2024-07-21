@@ -20,9 +20,6 @@ The purpose of this experiment is:
 - Matabuena et al. (2024): [Deep Learning Framework with Uncertainty Quantification for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American Population
 ](https://arxiv.org/abs/2403.19752)
 
-🚧 Preliminary notes:
-
-- What blood pressure readings are taking (1rst, 2nd, 3rd) ?
 
 ## 1. Replication
 
