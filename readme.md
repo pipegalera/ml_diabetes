@@ -5,7 +5,7 @@
 
 The purpose of this experiment is:
 
-1) Replicating the scarce literature on the topic.
+1) Replicating the literature on the topic.
 
 2) Compare the ability of non-parametric models predicting Diabetes based on survey and lab public medical data from different sources:
 
@@ -25,15 +25,17 @@ The purpose of this experiment is:
 
 ### NHANES Data Backfill
 
-To download `NHANES` data, I've created `nhanes_data_downloader.py`:
+To download `NHANES` data, I've created a Python script under `notebooks/nhanes_data_backfill.inbpy` that can download the selected variables from the specific NHANES files and stack them together in a single DataFrame:
 
-![nhanes_data_downloader.py](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/NHANES_downloader.png)
+![nhanes_data_downloader.py](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/nhanes_data_backfill.png)
 
-The selection of the variables and time-frames used to predict diabetes depend of the paper (see more in each paper folder).
+Note: refactoring pending to a standalone .py file.
+
+The selection of the variables and time-frames used to predict diabetes depends on the paper.
 
 ### Diabetes definition
 
-Even that the definition of the label "Diabetes" slightly change in the papers, they is consistent with the
+Even that the definition of the label "Diabetes" slightly change from paper to paper, they are consistent with the
 [American Diabetes Association (see Table 3)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2797383/table/T3/).
 
 ## 2. Model Comparison
