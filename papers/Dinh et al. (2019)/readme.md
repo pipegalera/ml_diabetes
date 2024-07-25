@@ -43,6 +43,16 @@ The structure of the analysis emulates the Figure 1 from the paper:
 library(arrow)
 library(dplyr)
 library(readxl)
+library(caret)
+library(glue)
+library(recipes)
+library(zeallot)
+library(pROC)
+
+
+SEED <- 4208
+DATA_PATH  <- "/Users/pipegalera/dev/ml_diabetes/data/raw_data/NHANES/"
+DINH_DOCS_PATH <- "/Users/pipegalera/dev/ml_diabetes/data/processed/NHANES/"
 ```
 
 ## 1. HNANES data
@@ -80,7 +90,6 @@ For now, I will consider the variables taken from [Figure 5](https://raw.githubu
 
 
 ```R
-DINH_DOCS_PATH <- "/Users/pipegalera/dev/ml_diabetes/data/processed/NHANES/"
 dinh_2019_vars <- read_excel(paste0(DINH_DOCS_PATH, "dinh_2019_variables_doc.xlsx"))
 
 head(dinh_2019_vars[c("Variable Name", "NHANES Name")], n=15)
@@ -123,7 +132,6 @@ Plese notice that no transformation are made to the covariates, the files were o
 
 
 ```R
-DATA_PATH  <- "/Users/pipegalera/dev/ml_diabetes/data/raw_data/NHANES/"
 df <- read_parquet(paste0(DATA_PATH, "dinh_raw_data.parquet"))
 ```
 
@@ -134,7 +142,7 @@ head(df)
 
 
 <table class="dataframe">
-<caption>A tibble: 6 x 77</caption>
+<caption>A tibble: 6 x 78</caption>
 <thead>
 	<tr><th scope=col>SEQN</th><th scope=col>YEAR</th><th scope=col>RIDAGEYR</th><th scope=col>ALQ130</th><th scope=col>DRXTALCO</th><th scope=col>DR1TALCO</th><th scope=col>DR2TALCO</th><th scope=col>BMXARMC</th><th scope=col>BMXARML</th><th scope=col>LBXSOSSI</th><th scope=col>...</th><th scope=col>SEQ060</th><th scope=col>DIQ010</th><th scope=col>MCQ160B</th><th scope=col>MCQ160b</th><th scope=col>MCQ160C</th><th scope=col>MCQ160c</th><th scope=col>MCQ160E</th><th scope=col>MCQ160e</th><th scope=col>MCQ160F</th><th scope=col>MCQ160f</th></tr>
 	<tr><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>...</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th></tr>
@@ -146,30 +154,6 @@ head(df)
 	<tr><td>4</td><td>1999-2000</td><td> 1</td><td>NA</td><td> 0.00</td><td>NA</td><td>NA</td><td>16.4</td><td>20.4</td><td> NA</td><td>...</td><td>NA</td><td>2</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td></tr>
 	<tr><td>5</td><td>1999-2000</td><td>49</td><td> 3</td><td>34.56</td><td>NA</td><td>NA</td><td>35.8</td><td>39.7</td><td>276</td><td>...</td><td>NA</td><td>2</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td></tr>
 	<tr><td>6</td><td>1999-2000</td><td>19</td><td>NA</td><td> 0.00</td><td>NA</td><td>NA</td><td>26.0</td><td>34.5</td><td>277</td><td>...</td><td> 2</td><td>2</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td></tr>
-</tbody>
-</table>
-
-
-
-
-```R
-tail(df)
-```
-
-
-<table class="dataframe">
-<caption>A tibble: 6 x 77</caption>
-<thead>
-	<tr><th scope=col>SEQN</th><th scope=col>YEAR</th><th scope=col>RIDAGEYR</th><th scope=col>ALQ130</th><th scope=col>DRXTALCO</th><th scope=col>DR1TALCO</th><th scope=col>DR2TALCO</th><th scope=col>BMXARMC</th><th scope=col>BMXARML</th><th scope=col>LBXSOSSI</th><th scope=col>...</th><th scope=col>SEQ060</th><th scope=col>DIQ010</th><th scope=col>MCQ160B</th><th scope=col>MCQ160b</th><th scope=col>MCQ160C</th><th scope=col>MCQ160c</th><th scope=col>MCQ160E</th><th scope=col>MCQ160e</th><th scope=col>MCQ160F</th><th scope=col>MCQ160f</th></tr>
-	<tr><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>...</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th></tr>
-</thead>
-<tbody>
-	<tr><td>83726</td><td>2013-2014</td><td>40</td><td>NA</td><td>NA</td><td>NA</td><td>  NA</td><td>31.0</td><td>39.0</td><td> NA</td><td>...</td><td>NA</td><td>2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td></tr>
-	<tr><td>83727</td><td>2013-2014</td><td>26</td><td> 3</td><td>NA</td><td>14</td><td>19.9</td><td>29.9</td><td>35.2</td><td>285</td><td>...</td><td>NA</td><td>2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td></tr>
-	<tr><td>83728</td><td>2013-2014</td><td> 2</td><td>NA</td><td>NA</td><td> 0</td><td> 0.0</td><td>14.7</td><td>16.5</td><td> NA</td><td>...</td><td>NA</td><td>2</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td></tr>
-	<tr><td>83729</td><td>2013-2014</td><td>42</td><td>NA</td><td>NA</td><td> 0</td><td> 0.0</td><td>37.0</td><td>37.6</td><td>277</td><td>...</td><td>NA</td><td>2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td><td>NA</td><td> 2</td></tr>
-	<tr><td>83730</td><td>2013-2014</td><td> 7</td><td>NA</td><td>NA</td><td>NA</td><td>  NA</td><td>19.0</td><td>26.0</td><td> NA</td><td>...</td><td>NA</td><td>2</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td></tr>
-	<tr><td>83731</td><td>2013-2014</td><td>11</td><td>NA</td><td>NA</td><td> 0</td><td> 0.0</td><td>25.0</td><td>31.7</td><td> NA</td><td>...</td><td>NA</td><td>2</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td></tr>
 </tbody>
 </table>
 
@@ -195,7 +179,7 @@ colnames(df)
 .list-inline>li {display: inline-block}
 .list-inline>li:not(:last-child)::after {content: "\00b7"; padding: 0 .5ex}
 </style>
-<ol class=list-inline><li>'SEQN'</li><li>'YEAR'</li><li>'RIDAGEYR'</li><li>'ALQ130'</li><li>'DRXTALCO'</li><li>'DR1TALCO'</li><li>'DR2TALCO'</li><li>'BMXARMC'</li><li>'BMXARML'</li><li>'LBXSOSSI'</li><li>'MCQ250A'</li><li>'LBDSBUSI'</li><li>'BMXBMI'</li><li>'DRXTCAFF'</li><li>'DR1TCAFF'</li><li>'DR2TCAFF'</li><li>'DR1TCALC'</li><li>'DR2TCALC'</li><li>'DRXTCALC'</li><li>'DR1TCARB'</li><li>'DR2TCARB'</li><li>'DRXTCARB'</li><li>'LB2SCLSI'</li><li>'MCQ300c'</li><li>'MCQ300C'</li><li>'BPXDI1'</li><li>'BPXDI4'</li><li>'BPXDI2'</li><li>'BPXDI3'</li><li>'RIDRETH1'</li><li>'DR1TFIBE'</li><li>'DR2TFIBE'</li><li>'DRXTFIBE'</li><li>'LBXSGTSI'</li><li>'HSD010'</li><li>'HUQ010'</li><li>'LBDHDLSI'</li><li>'LBDHDDSI'</li><li>'BMXHT'</li><li>'BPQ080'</li><li>'INDHHIN2'</li><li>'DRXTKCAL'</li><li>'DR1TKCAL'</li><li>'DR2TKCAL'</li><li>'LBDLDLSI'</li><li>'BMXLEG'</li><li>'LBDLYMNO'</li><li>'LBXMCVSI'</li><li>'BPXPLS'</li><li>'WHD140'</li><li>'DR1TSODI'</li><li>'DR2TSODI'</li><li>'DRDTSODI'</li><li>'BPXSY1'</li><li>'BPXSY4'</li><li>'BPXSY2'</li><li>'BPXSY3'</li><li>'LBDTCSI'</li><li>'LBDSTRSI'</li><li>'BMXWAIST'</li><li>'BMXWT'</li><li>'LBXWBCSI'</li><li>'LBXSASSI'</li><li>'LBXGLUSI'</li><li>'LBDGLUSI'</li><li>'RHQ141'</li><li>'RHD143'</li><li>'SEQ060'</li><li>'DIQ010'</li><li>'MCQ160B'</li><li>'MCQ160b'</li><li>'MCQ160C'</li><li>'MCQ160c'</li><li>'MCQ160E'</li><li>'MCQ160e'</li><li>'MCQ160F'</li><li>'MCQ160f'</li></ol>
+<ol class=list-inline><li>'SEQN'</li><li>'YEAR'</li><li>'RIDAGEYR'</li><li>'ALQ130'</li><li>'DRXTALCO'</li><li>'DR1TALCO'</li><li>'DR2TALCO'</li><li>'BMXARMC'</li><li>'BMXARML'</li><li>'LBXSOSSI'</li><li>'MCQ250A'</li><li>'LBDSBUSI'</li><li>'BMXBMI'</li><li>'DRXTCAFF'</li><li>'DR1TCAFF'</li><li>'DR2TCAFF'</li><li>'DR1TCALC'</li><li>'DR2TCALC'</li><li>'DRXTCALC'</li><li>'DR1TCARB'</li><li>'DR2TCARB'</li><li>'DRXTCARB'</li><li>'LBXSNASI'</li><li>'LBXSCLSI'</li><li>'MCQ300c'</li><li>'MCQ300C'</li><li>'BPXDI1'</li><li>'BPXDI4'</li><li>'BPXDI2'</li><li>'BPXDI3'</li><li>'RIDRETH1'</li><li>'DR1TFIBE'</li><li>'DR2TFIBE'</li><li>'DRXTFIBE'</li><li>'LBXSGTSI'</li><li>'HSD010'</li><li>'HUQ010'</li><li>'LBDHDLSI'</li><li>'LBDHDDSI'</li><li>'BMXHT'</li><li>'BPQ080'</li><li>'INDHHIN2'</li><li>'DRXTKCAL'</li><li>'DR1TKCAL'</li><li>'DR2TKCAL'</li><li>'LBDLDLSI'</li><li>'BMXLEG'</li><li>'LBDLYMNO'</li><li>'LBXMCVSI'</li><li>'BPXPLS'</li><li>'WHD140'</li><li>'DR1TSODI'</li><li>'DR2TSODI'</li><li>'DRDTSODI'</li><li>'BPXSY1'</li><li>'BPXSY4'</li><li>'BPXSY2'</li><li>'BPXSY3'</li><li>'LBDTCSI'</li><li>'LBDSTRSI'</li><li>'BMXWAIST'</li><li>'BMXWT'</li><li>'LBXWBCSI'</li><li>'LBXSASSI'</li><li>'LBXGLUSI'</li><li>'LBDGLUSI'</li><li>'RHQ141'</li><li>'RHD143'</li><li>'SEQ060'</li><li>'DIQ010'</li><li>'MCQ160B'</li><li>'MCQ160b'</li><li>'MCQ160C'</li><li>'MCQ160c'</li><li>'MCQ160E'</li><li>'MCQ160e'</li><li>'MCQ160F'</li><li>'MCQ160f'</li></ol>
 
 
 
@@ -216,7 +200,7 @@ All the variables can by found at  https://wwwn.cdc.gov/nchs/nhanes/search/defau
 
 ```R
 # Refused or Don"t know for NA
-df_formatted <- df %>%
+df <- df |>
   mutate(
     ALQ130 = case_when(
       ALQ130 == 77 ~ NA,
@@ -503,7 +487,7 @@ create_intake_new_column <- function(df, day0_col, day1_col, day2_col) {
            df[[day0_col]])
 }
 
-df_formatted <- df_formatted |>
+df <- df |>
 # Create new columns
   mutate(
     # Alcohol intake
@@ -547,7 +531,7 @@ df_formatted <- df_formatted |>
 
 
 ```R
-#unique(df_formatted$YEAR[!is.na(df_formatted$Relative_Had_Diabetes)])
+#unique(df$YEAR[!is.na(df$Relative_Had_Diabetes)])
 ```
 
 ### 2.3 Choosing between different readings in Blood analysis 
@@ -560,7 +544,7 @@ In Dinh et al. (2019) the authors do not say which readings are taking, but I'm 
 
 
 ```R
-df_formatted <- df_formatted |>
+df <- df |>
 # Create new columns
   mutate(
     Diastolic_Blood_Pressure = coalesce(BPXDI4, BPXDI3, BPXDI2, BPXDI1),
@@ -578,84 +562,19 @@ df_formatted <- df_formatted |>
 
 
 ```R
-df_formatted |> 
-  filter(Pregnant != "Yes") |> 
+df <- df |> 
+  filter(is.na(Pregnant) | Pregnant != "Yes") |> 
   filter(RIDAGEYR >= 20)  |> 
-  select(-c(RIDAGEYR, Pregnant))
+  select(-c(Pregnant))
 ```
 
 
-<table class="dataframe">
-<caption>A tibble: 6012 x 45</caption>
-<thead>
-	<tr><th scope=col>SEQN</th><th scope=col>YEAR</th><th scope=col>ALQ130</th><th scope=col>BMXARMC</th><th scope=col>BMXARML</th><th scope=col>LBXSOSSI</th><th scope=col>LBDSBUSI</th><th scope=col>BMXBMI</th><th scope=col>LB2SCLSI</th><th scope=col>RIDRETH1</th><th scope=col>...</th><th scope=col>Sodium_Intake</th><th scope=col>Relative_Had_Diabetes</th><th scope=col>Told_CHF</th><th scope=col>Told_CHD</th><th scope=col>Told_HA</th><th scope=col>Told_stroke</th><th scope=col>HDL_Cholesterol</th><th scope=col>Glucose</th><th scope=col>Diastolic_Blood_Pressure</th><th scope=col>Systolic_Blood_Pressure</th></tr>
-	<tr><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>...</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th></tr>
-</thead>
-<tbody>
-	<tr><td>  7</td><td>1999-2000</td><td>NA</td><td>31.7</td><td>38.1</td><td>283</td><td>3.6</td><td>29.39</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3808.53</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>2.73</td><td>4.756</td><td> 82</td><td>124</td></tr>
-	<tr><td> 15</td><td>1999-2000</td><td> 2</td><td>32.5</td><td>37.5</td><td>271</td><td>4.3</td><td>26.68</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>3832.49</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.49</td><td>5.484</td><td> 70</td><td>106</td></tr>
-	<tr><td> 24</td><td>1999-2000</td><td> 4</td><td>30.2</td><td>36.0</td><td>272</td><td>3.6</td><td>25.93</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>2811.52</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>2.72</td><td>   NA</td><td> 72</td><td>112</td></tr>
-	<tr><td> 25</td><td>1999-2000</td><td> 2</td><td>42.6</td><td>38.0</td><td>273</td><td>5.0</td><td>37.60</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>2251.98</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.42</td><td>5.700</td><td> 84</td><td>120</td></tr>
-	<tr><td> 34</td><td>1999-2000</td><td> 4</td><td>30.5</td><td>37.5</td><td>284</td><td>3.6</td><td>25.62</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>2135.20</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.06</td><td>5.339</td><td> 74</td><td>114</td></tr>
-	<tr><td> 45</td><td>1999-2000</td><td>NA</td><td>33.4</td><td>36.1</td><td>282</td><td>3.6</td><td>27.47</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>2473.31</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.41</td><td>   NA</td><td> 80</td><td>114</td></tr>
-	<tr><td> 96</td><td>1999-2000</td><td> 1</td><td>33.0</td><td>35.6</td><td> NA</td><td> NA</td><td>27.54</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td> 977.22</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>  NA</td><td>   NA</td><td> 82</td><td>126</td></tr>
-	<tr><td>102</td><td>1999-2000</td><td> 1</td><td>34.0</td><td>33.6</td><td>275</td><td>4.6</td><td>26.32</td><td>NA</td><td>Other Race - Including Multi-Racial</td><td>...</td><td>3005.35</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.18</td><td>4.572</td><td> 70</td><td>100</td></tr>
-	<tr><td>107</td><td>1999-2000</td><td> 2</td><td>30.7</td><td>32.9</td><td>278</td><td>3.9</td><td>26.97</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>4313.80</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.34</td><td>   NA</td><td> 54</td><td>106</td></tr>
-	<tr><td>115</td><td>1999-2000</td><td> 1</td><td>27.8</td><td>33.8</td><td>259</td><td>2.9</td><td>20.89</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>    NaN</td><td>No </td><td>No</td><td>NA</td><td>No </td><td>No</td><td>1.31</td><td>   NA</td><td> 74</td><td>116</td></tr>
-	<tr><td>132</td><td>1999-2000</td><td>NA</td><td>38.2</td><td>40.8</td><td>275</td><td>3.2</td><td>41.93</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>1060.47</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.02</td><td>5.928</td><td> 68</td><td>110</td></tr>
-	<tr><td>141</td><td>1999-2000</td><td> 3</td><td>30.5</td><td>37.3</td><td>269</td><td>4.3</td><td>26.19</td><td>NA</td><td>Other Hispanic                     </td><td>...</td><td>3652.88</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.28</td><td>5.222</td><td> 76</td><td>148</td></tr>
-	<tr><td>149</td><td>1999-2000</td><td>NA</td><td>31.0</td><td>34.2</td><td>273</td><td>2.9</td><td>27.06</td><td>NA</td><td>Other Hispanic                     </td><td>...</td><td>4686.03</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.17</td><td>4.972</td><td> 58</td><td> 94</td></tr>
-	<tr><td>177</td><td>1999-2000</td><td> 2</td><td>37.6</td><td>37.7</td><td>278</td><td>7.1</td><td>35.56</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>7829.90</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.16</td><td>5.850</td><td> 64</td><td>114</td></tr>
-	<tr><td>184</td><td>1999-2000</td><td>NA</td><td>30.1</td><td>35.5</td><td>266</td><td>3.9</td><td>24.69</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>1128.19</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.37</td><td>   NA</td><td> 68</td><td>120</td></tr>
-	<tr><td>188</td><td>1999-2000</td><td> 1</td><td>32.1</td><td>40.1</td><td>279</td><td>3.6</td><td>28.63</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>2346.64</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.22</td><td>   NA</td><td>104</td><td>160</td></tr>
-	<tr><td>192</td><td>1999-2000</td><td>NA</td><td>30.0</td><td>37.0</td><td>272</td><td>4.3</td><td>26.48</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>4682.73</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.65</td><td>4.519</td><td> 60</td><td> 98</td></tr>
-	<tr><td>193</td><td>1999-2000</td><td>NA</td><td>25.2</td><td>36.0</td><td>284</td><td>3.6</td><td>19.54</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>4156.90</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.39</td><td>   NA</td><td> 88</td><td>118</td></tr>
-	<tr><td>194</td><td>1999-2000</td><td>NA</td><td>35.0</td><td>36.0</td><td>278</td><td>3.6</td><td>31.54</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>3175.70</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.39</td><td>5.389</td><td> 74</td><td>116</td></tr>
-	<tr><td>198</td><td>1999-2000</td><td> 1</td><td>31.1</td><td>35.8</td><td>282</td><td>5.7</td><td>27.74</td><td>NA</td><td>Other Hispanic                     </td><td>...</td><td>3540.22</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.71</td><td>   NA</td><td> 76</td><td>116</td></tr>
-	<tr><td>199</td><td>1999-2000</td><td>NA</td><td>28.0</td><td>33.0</td><td>282</td><td>3.2</td><td>25.66</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>1337.21</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.31</td><td>   NA</td><td> 74</td><td>120</td></tr>
-	<tr><td>206</td><td>1999-2000</td><td>NA</td><td>30.4</td><td>33.0</td><td>281</td><td>5.7</td><td>25.79</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3261.32</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.23</td><td>   NA</td><td> 92</td><td>132</td></tr>
-	<tr><td>232</td><td>1999-2000</td><td> 1</td><td>31.7</td><td>34.9</td><td>276</td><td>3.9</td><td>25.34</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>1106.77</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>2.17</td><td>4.817</td><td> 62</td><td>110</td></tr>
-	<tr><td>236</td><td>1999-2000</td><td> 3</td><td>28.0</td><td>31.0</td><td>273</td><td>3.9</td><td>27.04</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>3637.11</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.28</td><td>6.189</td><td> 66</td><td>108</td></tr>
-	<tr><td>250</td><td>1999-2000</td><td> 1</td><td>29.7</td><td>34.7</td><td>276</td><td>4.6</td><td>26.90</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>3113.84</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.84</td><td>4.839</td><td> 74</td><td>116</td></tr>
-	<tr><td>265</td><td>1999-2000</td><td>10</td><td>40.9</td><td>33.5</td><td>282</td><td>5.4</td><td>41.84</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>4267.00</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.21</td><td>   NA</td><td> 74</td><td>120</td></tr>
-	<tr><td>300</td><td>1999-2000</td><td> 4</td><td>34.8</td><td>35.7</td><td>278</td><td>5.4</td><td>30.26</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>1249.04</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.22</td><td>4.550</td><td> 84</td><td>110</td></tr>
-	<tr><td>301</td><td>1999-2000</td><td> 2</td><td>30.6</td><td>35.4</td><td>276</td><td>3.2</td><td>24.80</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>2460.69</td><td>No </td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.21</td><td>5.039</td><td> 74</td><td>104</td></tr>
-	<tr><td>314</td><td>1999-2000</td><td> 1</td><td>27.7</td><td>37.3</td><td>273</td><td>3.2</td><td>24.18</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3030.99</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>1.36</td><td>   NA</td><td> 70</td><td>114</td></tr>
-	<tr><td>334</td><td>1999-2000</td><td> 1</td><td>28.0</td><td>29.6</td><td>282</td><td>3.9</td><td>22.82</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>1562.63</td><td>Yes</td><td>No</td><td>No</td><td>No </td><td>No</td><td>2.53</td><td>4.917</td><td> 60</td><td>154</td></tr>
-	<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td></td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>
-	<tr><td>83214</td><td>2013-2014</td><td> 2</td><td>31.4</td><td>32.1</td><td>271</td><td>2.50</td><td>30.5</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>2288.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.55</td><td>   NA</td><td>68</td><td> 96</td></tr>
-	<tr><td>83252</td><td>2013-2014</td><td> 2</td><td>38.2</td><td>39.5</td><td>274</td><td>2.14</td><td>28.8</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3293.5</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.03</td><td>4.885</td><td>68</td><td>112</td></tr>
-	<tr><td>83260</td><td>2013-2014</td><td>NA</td><td>27.0</td><td>33.4</td><td>274</td><td>3.57</td><td>21.4</td><td>NA</td><td>Other Race - Including Multi-Racial</td><td>...</td><td>2085.5</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.32</td><td>4.996</td><td>72</td><td>102</td></tr>
-	<tr><td>83301</td><td>2013-2014</td><td>NA</td><td>38.0</td><td>34.0</td><td>283</td><td>3.57</td><td>42.0</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>2993.5</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>0.93</td><td>   NA</td><td>80</td><td>118</td></tr>
-	<tr><td>83329</td><td>2013-2014</td><td> 2</td><td>24.8</td><td>32.7</td><td>272</td><td>1.79</td><td>19.9</td><td>NA</td><td>Other Hispanic                     </td><td>...</td><td>4063.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.58</td><td>   NA</td><td>52</td><td>108</td></tr>
-	<tr><td>83336</td><td>2013-2014</td><td>NA</td><td>30.4</td><td>34.3</td><td>277</td><td>1.79</td><td>27.8</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>1650.5</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>0.70</td><td>   NA</td><td>84</td><td>136</td></tr>
-	<tr><td>83356</td><td>2013-2014</td><td> 2</td><td>29.2</td><td>34.3</td><td>280</td><td>1.79</td><td>25.9</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>6006.5</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>0.78</td><td>   NA</td><td>76</td><td>108</td></tr>
-	<tr><td>83362</td><td>2013-2014</td><td> 1</td><td>24.8</td><td>33.3</td><td>278</td><td>5.36</td><td>20.6</td><td>NA</td><td>Other Race - Including Multi-Racial</td><td>...</td><td>4329.5</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.14</td><td>5.384</td><td>68</td><td>104</td></tr>
-	<tr><td>83368</td><td>2013-2014</td><td> 1</td><td>24.2</td><td>32.7</td><td>276</td><td>3.57</td><td>20.3</td><td>NA</td><td>Other Race - Including Multi-Racial</td><td>...</td><td>2986.5</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.60</td><td>   NA</td><td>74</td><td> 96</td></tr>
-	<tr><td>83372</td><td>2013-2014</td><td> 4</td><td>30.4</td><td>33.5</td><td>282</td><td>4.28</td><td>25.5</td><td>NA</td><td>Other Hispanic                     </td><td>...</td><td>2734.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.11</td><td>5.273</td><td>46</td><td> 92</td></tr>
-	<tr><td>83411</td><td>2013-2014</td><td> 2</td><td>28.0</td><td>32.0</td><td>278</td><td>2.86</td><td>22.2</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>1678.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.99</td><td>   NA</td><td>86</td><td>122</td></tr>
-	<tr><td>83412</td><td>2013-2014</td><td> 1</td><td>28.5</td><td>33.9</td><td> NA</td><td>  NA</td><td>22.5</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3212.5</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>  NA</td><td>   NA</td><td>84</td><td>132</td></tr>
-	<tr><td>83415</td><td>2013-2014</td><td> 1</td><td>24.8</td><td>33.8</td><td>273</td><td>5.00</td><td>19.9</td><td>NA</td><td>Other Race - Including Multi-Racial</td><td>...</td><td>5419.5</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.58</td><td>4.385</td><td>72</td><td> 98</td></tr>
-	<tr><td>83427</td><td>2013-2014</td><td> 3</td><td>32.0</td><td>36.5</td><td>281</td><td>3.57</td><td>28.8</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>5459.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.06</td><td>5.162</td><td>60</td><td> 92</td></tr>
-	<tr><td>83433</td><td>2013-2014</td><td> 1</td><td>29.5</td><td>32.5</td><td>280</td><td>3.93</td><td>22.8</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>4499.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.73</td><td>5.218</td><td>46</td><td> 90</td></tr>
-	<tr><td>83448</td><td>2013-2014</td><td> 3</td><td>34.1</td><td>33.7</td><td>279</td><td>4.28</td><td>32.8</td><td>NA</td><td>Other Race - Including Multi-Racial</td><td>...</td><td>3830.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.66</td><td>7.050</td><td>76</td><td>126</td></tr>
-	<tr><td>83459</td><td>2013-2014</td><td> 1</td><td>43.5</td><td>36.0</td><td> NA</td><td>  NA</td><td>45.1</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>2465.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>  NA</td><td>   NA</td><td>56</td><td>104</td></tr>
-	<tr><td>83461</td><td>2013-2014</td><td> 3</td><td>26.1</td><td>34.6</td><td>271</td><td>1.79</td><td>23.4</td><td>NA</td><td>Other Hispanic                     </td><td>...</td><td>2266.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>2.25</td><td>   NA</td><td>78</td><td>136</td></tr>
-	<tr><td>83491</td><td>2013-2014</td><td> 3</td><td>41.0</td><td>43.0</td><td>281</td><td>5.00</td><td>40.0</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3033.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.47</td><td>5.384</td><td>80</td><td>118</td></tr>
-	<tr><td>83497</td><td>2013-2014</td><td> 1</td><td>28.8</td><td>32.5</td><td>279</td><td>5.00</td><td>23.2</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>   NaN</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.53</td><td>5.162</td><td>66</td><td>100</td></tr>
-	<tr><td>83518</td><td>2013-2014</td><td> 2</td><td>32.6</td><td>36.5</td><td>278</td><td>3.93</td><td>30.2</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3498.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.24</td><td>   NA</td><td>66</td><td>126</td></tr>
-	<tr><td>83558</td><td>2013-2014</td><td>NA</td><td>31.4</td><td>36.7</td><td> NA</td><td>  NA</td><td>28.0</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td> 743.5</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>  NA</td><td>   NA</td><td>64</td><td>112</td></tr>
-	<tr><td>83643</td><td>2013-2014</td><td> 6</td><td>26.6</td><td>33.3</td><td>275</td><td>3.21</td><td>22.3</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>3276.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.24</td><td>   NA</td><td>64</td><td>100</td></tr>
-	<tr><td>83678</td><td>2013-2014</td><td>10</td><td>23.7</td><td>34.7</td><td>275</td><td>2.50</td><td>18.3</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>5585.5</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>3.03</td><td>5.384</td><td>78</td><td>122</td></tr>
-	<tr><td>83683</td><td>2013-2014</td><td>NA</td><td>34.4</td><td>36.2</td><td>277</td><td>2.14</td><td>30.0</td><td>NA</td><td>Mexican American                   </td><td>...</td><td>3933.5</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.73</td><td>5.607</td><td>68</td><td>102</td></tr>
-	<tr><td>83688</td><td>2013-2014</td><td> 3</td><td>26.5</td><td>34.6</td><td>279</td><td>3.21</td><td>22.5</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>3783.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.11</td><td>   NA</td><td>72</td><td>104</td></tr>
-	<tr><td>83689</td><td>2013-2014</td><td> 3</td><td>27.0</td><td>36.0</td><td>285</td><td>5.00</td><td>23.6</td><td>NA</td><td>Non-Hispanic Blac                  </td><td>...</td><td>3646.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.19</td><td>   NA</td><td>76</td><td>112</td></tr>
-	<tr><td>83694</td><td>2013-2014</td><td> 1</td><td>31.9</td><td>34.8</td><td>276</td><td>3.21</td><td>25.3</td><td>NA</td><td>Other Race - Including Multi-Racial</td><td>...</td><td>3449.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>0.96</td><td>5.495</td><td>60</td><td>116</td></tr>
-	<tr><td>83699</td><td>2013-2014</td><td> 1</td><td>25.2</td><td>34.0</td><td>276</td><td>2.50</td><td>20.8</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>5362.0</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.68</td><td>4.607</td><td>70</td><td>114</td></tr>
-	<tr><td>83711</td><td>2013-2014</td><td>NA</td><td>32.1</td><td>33.8</td><td>282</td><td>2.14</td><td>33.5</td><td>NA</td><td>Non-Hispanic White                 </td><td>...</td><td>1680.0</td><td>No </td><td>No</td><td>No</td><td>No</td><td>No</td><td>1.11</td><td>5.551</td><td>78</td><td>112</td></tr>
-</tbody>
-</table>
+```R
+nrow(df)
+```
 
+
+42655
 
 
 ### 2.5 Creating the  Target Variables
@@ -686,37 +605,22 @@ From [Tables 1 & 3 from Dinh et al. 2019](https://raw.githubusercontent.com/pipe
 
 
 ```R
-colnames(df_formatted)
-```
-
-
-<style>
-.list-inline {list-style: none; margin:0; padding: 0}
-.list-inline>li {display: inline-block}
-.list-inline>li:not(:last-child)::after {content: "\00b7"; padding: 0 .5ex}
-</style>
-<ol class=list-inline><li>'SEQN'</li><li>'YEAR'</li><li>'RIDAGEYR'</li><li>'ALQ130'</li><li>'BMXARMC'</li><li>'BMXARML'</li><li>'LBXSOSSI'</li><li>'LBDSBUSI'</li><li>'BMXBMI'</li><li>'LB2SCLSI'</li><li>'RIDRETH1'</li><li>'LBXSGTSI'</li><li>'HSD010'</li><li>'HUQ010'</li><li>'BMXHT'</li><li>'BPQ080'</li><li>'INDHHIN2'</li><li>'LBDLDLSI'</li><li>'BMXLEG'</li><li>'LBDLYMNO'</li><li>'LBXMCVSI'</li><li>'BPXPLS'</li><li>'WHD140'</li><li>'LBDTCSI'</li><li>'LBDSTRSI'</li><li>'BMXWAIST'</li><li>'BMXWT'</li><li>'LBXWBCSI'</li><li>'LBXSASSI'</li><li>'DIQ010'</li><li>'Alcohol_Intake'</li><li>'Caffeine_Intake'</li><li>'Calcium_Intake'</li><li>'Carbohydrate_Intake'</li><li>'Fiber_Intake'</li><li>'Kcal_Intake'</li><li>'Sodium_Intake'</li><li>'Relative_Had_Diabetes'</li><li>'Told_CHF'</li><li>'Told_CHD'</li><li>'Told_HA'</li><li>'Told_stroke'</li><li>'Pregnant'</li><li>'HDL_Cholesterol'</li><li>'Glucose'</li><li>'Diastolic_Blood_Pressure'</li><li>'Systolic_Blood_Pressure'</li></ol>
-
-
-
-
-```R
-df_formatted <- df_formatted %>%
+df <- df |>
   mutate(
     # Diabetic or not diabetic
     Diabetes_Case_I = case_when(
-      (Glucose > 7.0 | DIQ010 == "Yes") ~ 1,
-      TRUE ~ 0),
+      (Glucose > 7.0 | DIQ010 == "Yes") ~ "Yes",
+      TRUE ~ "No"),
     Diabetes_Case_II = case_when(
       # Undiagnosed Diabetic 
-      (Diabetes_Case_I == 0 & Glucose > 7.0 & DIQ010 == "No") ~ 1,
+      (Diabetes_Case_I == "No" & Glucose > 7.0 & DIQ010 == "No") ~ "Yes",
       # Prediabetic
-      (Diabetes_Case_I == 0 & Glucose >= 5.6 & Glucose < 7.0) ~ 1,
-      TRUE ~  0),
+      (Diabetes_Case_I == "No" & Glucose >= 5.6 & Glucose < 7.0) ~ "Yes",
+      TRUE ~  "No"),
     # Cardiovascular Disease
     CVD = case_when(
-      (Told_CHF == "Yes" | Told_CHD == "Yes" | Told_HA == "Yes" | Told_stroke == "Yes") ~ 1,
-      TRUE ~  0)
+      (Told_CHF == "Yes" | Told_CHD == "Yes" | Told_HA == "Yes" | Told_stroke == "Yes") ~ "Yes",
+      TRUE ~  "No")
   )  |>
   select(-c(Told_CHF, Told_CHD, Told_HA, Told_stroke, Glucose, DIQ010))
 ```
@@ -725,7 +629,7 @@ df_formatted <- df_formatted %>%
 
 
 ```R
-df_formatted <- df_formatted %>% 
+df <- df |>
   rename(
     Alcohol_consumption = ALQ130,
     Arm_circumference = BMXARMC,
@@ -740,7 +644,8 @@ df_formatted <- df_formatted %>%
     General_health = HSD010,
     Health_status = HUQ010,
     Household_income = INDHHIN2,
-    Chloride = LB2SCLSI,
+    Chloride = LBXSCLSI,
+    Sodium = LBXSNASI,
     LDL_cholesterol = LBDLDLSI,
     Lymphocytes = LBDLYMNO,
     Blood_urea_nitrogen = LBDSBUSI,
@@ -753,14 +658,14 @@ df_formatted <- df_formatted %>%
     White_blood_cell_count = LBXWBCSI,
     Age = RIDAGEYR,
     Race_ethnicity = RIDRETH1,
-    `Self-reported_greatest_weight` = WHD140,
+    Self-reported_greatest_weight = WHD140,
     Survey_year = YEAR,
   )
 ```
 
 
 ```R
-colnames(df_formatted)
+colnames(df)
 ```
 
 
@@ -769,27 +674,121 @@ colnames(df_formatted)
 .list-inline>li {display: inline-block}
 .list-inline>li:not(:last-child)::after {content: "\00b7"; padding: 0 .5ex}
 </style>
-<ol class=list-inline><li>'SEQN'</li><li>'Survey_year'</li><li>'Age'</li><li>'Alcohol_consumption'</li><li>'Arm_circumference'</li><li>'Arm_length'</li><li>'Osmolality'</li><li>'Blood_urea_nitrogen'</li><li>'Body_mass_index'</li><li>'Chloride'</li><li>'Race_ethnicity'</li><li>'Gamma_glutamyl_transferase'</li><li>'General_health'</li><li>'Health_status'</li><li>'Height'</li><li>'Told_High_Cholesterol'</li><li>'Household_income'</li><li>'LDL_cholesterol'</li><li>'Leg_length'</li><li>'Lymphocytes'</li><li>'Mean_cell_volume'</li><li>'Pulse'</li><li>'Self-reported_greatest_weight'</li><li>'Total_cholesterol'</li><li>'Triglycerides'</li><li>'Waist_circumference'</li><li>'Weight'</li><li>'White_blood_cell_count'</li><li>'Aspartate_aminotransferase_AST'</li><li>'Alcohol_Intake'</li><li>'Caffeine_Intake'</li><li>'Calcium_Intake'</li><li>'Carbohydrate_Intake'</li><li>'Fiber_Intake'</li><li>'Kcal_Intake'</li><li>'Sodium_Intake'</li><li>'Relative_Had_Diabetes'</li><li>'Pregnant'</li><li>'HDL_Cholesterol'</li><li>'Diastolic_Blood_Pressure'</li><li>'Systolic_Blood_Pressure'</li><li>'Diabetes_Case_I'</li><li>'Diabetes_Case_II'</li><li>'CVD'</li></ol>
+<ol class=list-inline><li>'SEQN'</li><li>'Survey_year'</li><li>'Age'</li><li>'Alcohol_consumption'</li><li>'Arm_circumference'</li><li>'Arm_length'</li><li>'Osmolality'</li><li>'Blood_urea_nitrogen'</li><li>'Body_mass_index'</li><li>'Sodium'</li><li>'Chloride'</li><li>'Race_ethnicity'</li><li>'Gamma_glutamyl_transferase'</li><li>'General_health'</li><li>'Health_status'</li><li>'Height'</li><li>'Told_High_Cholesterol'</li><li>'Household_income'</li><li>'LDL_cholesterol'</li><li>'Leg_length'</li><li>'Lymphocytes'</li><li>'Mean_cell_volume'</li><li>'Pulse'</li><li>'Self-reported_greatest_weight'</li><li>'Total_cholesterol'</li><li>'Triglycerides'</li><li>'Waist_circumference'</li><li>'Weight'</li><li>'White_blood_cell_count'</li><li>'Aspartate_aminotransferase_AST'</li><li>'Alcohol_Intake'</li><li>'Caffeine_Intake'</li><li>'Calcium_Intake'</li><li>'Carbohydrate_Intake'</li><li>'Fiber_Intake'</li><li>'Kcal_Intake'</li><li>'Sodium_Intake'</li><li>'Relative_Had_Diabetes'</li><li>'HDL_Cholesterol'</li><li>'Diastolic_Blood_Pressure'</li><li>'Systolic_Blood_Pressure'</li><li>'Diabetes_Case_I'</li><li>'Diabetes_Case_II'</li><li>'CVD'</li></ol>
 
 
 
-### 2.7 Normalization and Categorical Encoding.
+## 3. Model Development
 
+The training procedure is not very clear from the paper, but guessing from the context what it would make sense is:
+
+1. Split data into train (80%) and test (20%) sets.
+2. Hyper-tunning using 10-fold CV random grid search on the training set for every model (e.g. via `RandomizedSearchCV(cv=10)`).
+3. Train the final model on the entire training set using the best hyperparameters found.
+4. Evaluate the final model on the test set.
+
+### 3.1 Train/Test split
+
+The paper do a 80/20 split to train the model, trying to keep the target class proportions of the NHANES population in train and test sets:
+
+> Downsampling was used to produce a balanced 80/20 train/test split.
+
+First, I created a split based on the interaction of all the targets to keep the balance of the target labels. Afterwards, I created a quick R function to check it:
+
+
+```R
+set.seed(SEED)
+
+df$strata <- interaction(df$Diabetes_Case_I, df$Diabetes_Case_II, df$CVD)
+split <- createDataPartition(df$strata, p = 0.8, list = FALSE)
+
+train_data <- df[split, ]
+test_data <- df[-split, ]
+
+df$strata <- NULL
+train_data$strata <- NULL
+test_data$strata <- NULL
+```
+
+    Warning message in createDataPartition(df$strata, p = 0.8, list = FALSE):
+    "Some classes have no records ( Yes.Yes.No, Yes.Yes.Yes ) and these will be ignored"
+
+
+
+```R
+percent_target <- function(data, target) {
+    df_name <- deparse(substitute(data))
+    glue::glue("In {df_name}, percentage of cases of {target} is {round(sum(data[[target]]== 'Yes') / nrow(data) * 100, 2)}%")
+}
+
+percent_target(df, "Diabetes_Case_I")
+percent_target(train_data, "Diabetes_Case_I")
+percent_target(test_data, "Diabetes_Case_I")
+
+percent_target(df, "Diabetes_Case_II")
+percent_target(train_data, "Diabetes_Case_II")
+percent_target(test_data, "Diabetes_Case_II")
+
+percent_target(df, "CVD")
+percent_target(train_data, "CVD")
+percent_target(test_data, "CVD")
+
+```
+
+
+'In df, percentage of cases of Diabetes_Case_I is 13.43%'
+
+
+
+'In train_data, percentage of cases of Diabetes_Case_I is 13.44%'
+
+
+
+'In test_data, percentage of cases of Diabetes_Case_I is 13.42%'
+
+
+
+'In df, percentage of cases of Diabetes_Case_II is 13.08%'
+
+
+
+'In train_data, percentage of cases of Diabetes_Case_II is 13.08%'
+
+
+
+'In test_data, percentage of cases of Diabetes_Case_II is 13.07%'
+
+
+
+'In df, percentage of cases of CVD is 10.84%'
+
+
+
+'In train_data, percentage of cases of CVD is 10.85%'
+
+
+
+'In test_data, percentage of cases of CVD is 10.83%'
+
+
+### 3.2 RandomSearchCV in R
+
+> For each model, a grid-search approach with parallelized performance evaluation for model parameter tuning was used to generate the best model parameters. Next, each of the models underwent a 10-fold cross-validation (10 folds of training and testing with randomized data-split)
+
+It doesn't make so much sense to do grid-search on the entire training set before a cross-validation. The reason is that you would basically train the data before the validation set that you are using to check if the model generalize well. And then the whole purpose of the cross-validation is to check model fit outside of the training set - it would lose all purpose. 
+
+My best guess is that they used `GridSearchCV/RandomSearchCV` from sklearn and they assumed that the grid search go first. 
+
+
+The preprocessing also includes standarization, made also by the authors: 
 
 > Normalization was performed on the data using the following standardization model: x' = x−x^/σ 
-
-Before we apply `scale`, we need to: 
-
-1. Classify all the columns between categorical and numerical.
-2. Only apply the standarization to the numerical ones. 
 
 
 
 ```R
 # Categorical variables
 categorical_vars <- c(
-  'SEQN',
-  'Survey_year',
   'Race_ethnicity',
   'General_health',
   'Health_status',
@@ -808,6 +807,7 @@ numerical_vars <- c(
   'Blood_urea_nitrogen',
   'Body_mass_index',
   'Chloride',
+  'Sodium',
   'Gamma_glutamyl_transferase',
   'Height',
   'LDL_cholesterol',
@@ -833,139 +833,55 @@ numerical_vars <- c(
   'Diastolic_Blood_Pressure',
   'Systolic_Blood_Pressure'
 )
-
-df_formatted <- df_formatted |> 
-    mutate(
-        across(all_of(numerical_vars), scale)
-    )
-
 ```
 
 
 ```R
-df_formatted
+#target_vars <- c("Diabetes_Case_I", "Diabetes_Case_II", "CVD")
+
+data_ml_pipeline <- function(data,
+                            numerical_vars, 
+                            categorical_vars) {
+    # Target 
+    y <-  as.factor(data[[target]])
+
+    # Standarization and encoding of categorical variables.
+    X <- data |> select(all_of(c(numerical_vars, categorical_vars)))
+
+    rec <- recipe(~ ., data = X) |>
+      step_unknown(all_of(categorical_vars)) |> # assign a missing value in a factor level to "unknown".
+      step_mutate_at(all_of(categorical_vars), fn = as.factor) |>
+      step_integer(all_of(categorical_vars)) |>
+      step_normalize(all_of(numerical_vars))
+
+    prep_rec <- prep(rec)
+    X_processed <- bake(prep_rec, new_data = X)
+    X_processed <- as.data.frame(X_processed)
+
+    # 10F CV with Random Search (caret: https://topepo.github.io/caret/random-hyperparameter-search.html)
+    control_cv <- trainControl(
+        method = "cv",
+        number = 10,
+        search = "random",
+        classProbs = TRUE,
+        summaryFunction = twoClassSummary
+      )
+    return(list(X, y, control_cv))
+}
 ```
-
-
-<table class="dataframe">
-<caption>A tibble: 82091 x 44</caption>
-<thead>
-	<tr><th scope=col>SEQN</th><th scope=col>Survey_year</th><th scope=col>Age</th><th scope=col>Alcohol_consumption</th><th scope=col>Arm_circumference</th><th scope=col>Arm_length</th><th scope=col>Osmolality</th><th scope=col>Blood_urea_nitrogen</th><th scope=col>Body_mass_index</th><th scope=col>Chloride</th><th scope=col>...</th><th scope=col>Kcal_Intake</th><th scope=col>Sodium_Intake</th><th scope=col>Relative_Had_Diabetes</th><th scope=col>Pregnant</th><th scope=col>HDL_Cholesterol</th><th scope=col>Diastolic_Blood_Pressure</th><th scope=col>Systolic_Blood_Pressure</th><th scope=col>Diabetes_Case_I</th><th scope=col>Diabetes_Case_II</th><th scope=col>CVD</th></tr>
-	<tr><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>...</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl[,1]&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th></tr>
-</thead>
-<tbody>
-	<tr><td> 1</td><td>1999-2000</td><td>-1.1528298</td><td>         NA</td><td>-1.6636987</td><td>-1.8937916</td><td>         NA</td><td>         NA</td><td>-1.38902690</td><td>NA</td><td>...</td><td>-0.6751562</td><td>-0.89336922</td><td>NA </td><td>NA </td><td>         NA</td><td>         NA</td><td>        NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 2</td><td>1999-2000</td><td> 1.8626044</td><td>-0.65078964</td><td> 0.2069443</td><td> 0.6926871</td><td> 1.96698244</td><td> 1.12256662</td><td>-0.05442850</td><td>NA</td><td>...</td><td> 0.5726372</td><td> 1.63753100</td><td>No </td><td>NA </td><td> 0.06515962</td><td>-0.62537804</td><td>-1.0586164</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 3</td><td>1999-2000</td><td>-0.8311835</td><td>         NA</td><td>-1.0871307</td><td>-0.9832455</td><td>         NA</td><td>         NA</td><td>-1.02468154</td><td>NA</td><td>...</td><td>-0.4956811</td><td>-0.85922508</td><td>NA </td><td>NA </td><td>-1.51960665</td><td>-0.23674586</td><td>-0.3205259</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 4</td><td>1999-2000</td><td>-1.1930356</td><td>         NA</td><td>-1.5099472</td><td>-1.6562579</td><td>         NA</td><td>         NA</td><td>         NA</td><td>NA</td><td>...</td><td>-0.5440052</td><td>-1.10633059</td><td>NA </td><td>NA </td><td>         NA</td><td>         NA</td><td>        NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 5</td><td>1999-2000</td><td> 0.7368423</td><td> 0.04596624</td><td> 0.9757016</td><td> 0.8906320</td><td>-0.34171723</td><td> 0.58303298</td><td> 0.50610283</td><td>NA</td><td>...</td><td> 0.7931698</td><td> 0.42820578</td><td>No </td><td>NA </td><td>-0.74021340</td><td> 1.05869472</td><td> 0.2066816</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 6</td><td>1999-2000</td><td>-0.4693314</td><td>         NA</td><td>-0.2799354</td><td> 0.2044233</td><td>-0.14932559</td><td>-0.64317984</td><td>-0.36672453</td><td>NA</td><td>...</td><td>-0.9522854</td><td>-1.30923318</td><td>NA </td><td>No </td><td> 0.53279557</td><td> 0.92915066</td><td>-0.3205259</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 7</td><td>1999-2000</td><td> 1.1389002</td><td>         NA</td><td> 0.4503841</td><td> 0.6794908</td><td> 1.00502424</td><td>-0.44698579</td><td> 0.54480618</td><td>NA</td><td>...</td><td> 0.1325214</td><td> 0.46049910</td><td>Yes</td><td>No </td><td> 3.54644946</td><td> 1.05869472</td><td> 0.3121231</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 8</td><td>1999-2000</td><td>-0.7105661</td><td>         NA</td><td>-1.0358802</td><td> 0.4947423</td><td>-0.72650051</td><td> 0.92637256</td><td>-1.30761640</td><td>NA</td><td>...</td><td> 4.6304409</td><td> 4.53106721</td><td>NA </td><td>NA </td><td> 0.97445174</td><td>-0.62537804</td><td>-1.1640579</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td> 9</td><td>1999-2000</td><td>-0.7909777</td><td>         NA</td><td>-0.7796277</td><td>-0.1254847</td><td>         NA</td><td>         NA</td><td>-0.91124067</td><td>NA</td><td>...</td><td>-0.4810347</td><td>-0.72717962</td><td>NA </td><td>NA </td><td> 0.32495737</td><td>-1.14355427</td><td>-0.4259674</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>10</td><td>1999-2000</td><td> 0.4956076</td><td>-0.65078964</td><td> 1.2063289</td><td> 1.3261105</td><td> 0.62024097</td><td> 0.04349934</td><td> 0.75166894</td><td>NA</td><td>...</td><td> 1.7667610</td><td> 0.19345554</td><td>NA </td><td>NA </td><td>-0.14267858</td><td> 1.96550312</td><td> 1.2610966</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>11</td><td>1999-2000</td><td>-0.6301545</td><td>         NA</td><td> 0.1300685</td><td> 0.5607239</td><td> 0.04306605</td><td> 0.23969339</td><td>-0.44146204</td><td>NA</td><td>...</td><td> 4.2676934</td><td> 2.66495635</td><td>NA </td><td>NA </td><td>-0.89609205</td><td>-1.01401021</td><td>-0.7422919</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>12</td><td>1999-2000</td><td> 0.2543728</td><td> 0.04596624</td><td> 1.1550784</td><td> 0.9302209</td><td> 1.00502424</td><td> 1.26971215</td><td> 0.70896179</td><td>NA</td><td>...</td><td> 1.5731480</td><td> 2.75244606</td><td>Yes</td><td>NA </td><td>-1.00001115</td><td> 2.22459124</td><td> 3.0536022</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>13</td><td>1999-2000</td><td> 1.5811639</td><td>-0.30241170</td><td>-0.1518092</td><td> 0.0724601</td><td> 1.96698244</td><td> 1.12256662</td><td> 0.03498959</td><td>NA</td><td>...</td><td>-0.5889842</td><td>-1.23668618</td><td>Yes</td><td>NA </td><td>-0.22061790</td><td> 0.28143037</td><td> 0.6284476</td><td>1</td><td>0</td><td>0</td></tr>
-	<tr><td>14</td><td>1999-2000</td><td> 2.0234276</td><td>-0.65078964</td><td> 0.6681987</td><td> 0.4947423</td><td> 1.19741588</td><td> 0.23969339</td><td> 0.26987891</td><td>NA</td><td>...</td><td>       NaN</td><td>        NaN</td><td>No </td><td>NA </td><td>-0.84413250</td><td>-0.10720180</td><td> 1.0502136</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>15</td><td>1999-2000</td><td> 0.2945786</td><td>-0.30241170</td><td> 0.5528851</td><td> 0.6003129</td><td>-1.30367543</td><td>-0.10364620</td><td> 0.18313002</td><td>NA</td><td>...</td><td> 0.6971092</td><td> 0.47533039</td><td>No </td><td>No </td><td> 0.32495737</td><td> 0.28143037</td><td>-0.6368504</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>16</td><td>1999-2000</td><td> 2.1842507</td><td>         NA</td><td>-0.5874384</td><td> 0.2440123</td><td> 2.35176572</td><td> 2.69211902</td><td>-0.71372011</td><td>NA</td><td>...</td><td>-1.1955787</td><td>-0.57855110</td><td>No </td><td>NA </td><td> 0.11711917</td><td>-0.23674586</td><td> 0.9447721</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>17</td><td>1999-2000</td><td>-1.1528298</td><td>         NA</td><td>-1.5996356</td><td>-2.0785401</td><td>         NA</td><td>         NA</td><td>-1.43974164</td><td>NA</td><td>...</td><td> 1.2350486</td><td> 1.02301698</td><td>NA </td><td>NA </td><td>         NA</td><td>         NA</td><td>        NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>18</td><td>1999-2000</td><td>-1.1930356</td><td>         NA</td><td>-1.3946336</td><td>-2.4348407</td><td>         NA</td><td>         NA</td><td>         NA</td><td>NA</td><td>...</td><td>-0.7626053</td><td>-0.70649258</td><td>NA </td><td>NA </td><td>         NA</td><td>         NA</td><td>        NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>19</td><td>1999-2000</td><td>-1.2332413</td><td>         NA</td><td>-1.4715094</td><td>-1.9729695</td><td>         NA</td><td>         NA</td><td>         NA</td><td>NA</td><td>...</td><td>-1.3240626</td><td>-1.24700494</td><td>NA </td><td>NA </td><td>         NA</td><td>         NA</td><td>        NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>20</td><td>1999-2000</td><td>-0.3085082</td><td> 0.04596624</td><td>-0.2671228</td><td> 0.2044233</td><td>-1.30367543</td><td>-0.44698579</td><td>-0.21724950</td><td>NA</td><td>...</td><td>-0.3249305</td><td>-0.19694269</td><td>Yes</td><td>Yes</td><td>-0.68825385</td><td>-0.23674586</td><td>-0.7422919</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>21</td><td>1999-2000</td><td>-0.5095371</td><td>         NA</td><td> 0.6810113</td><td> 0.4023681</td><td>-0.91889215</td><td>-0.10364620</td><td> 1.92878473</td><td>NA</td><td>...</td><td>-0.8869529</td><td>-1.05926788</td><td>NA </td><td>NA </td><td>-1.23382913</td><td> 0.67006254</td><td>-0.1096429</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>22</td><td>1999-2000</td><td>-0.7105661</td><td>         NA</td><td>-0.6899394</td><td> 0.5739203</td><td>-0.14932559</td><td>-0.10364620</td><td>-0.79513061</td><td>NA</td><td>...</td><td>-1.0252463</td><td>-0.76197371</td><td>NA </td><td>No </td><td> 0.66269444</td><td> 0.41097443</td><td>-0.6368504</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>23</td><td>1999-2000</td><td>-0.7507719</td><td>         NA</td><td> 0.5913230</td><td> 0.7718651</td><td> 0.23545769</td><td>-0.44698579</td><td> 0.12307309</td><td>NA</td><td>...</td><td>-0.1890330</td><td>-0.02995458</td><td>NA </td><td>No </td><td>-1.38970777</td><td>-0.49583398</td><td>-1.1640579</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>24</td><td>1999-2000</td><td> 0.8976655</td><td> 0.39434418</td><td> 0.2581948</td><td> 0.4023681</td><td>-1.11128379</td><td>-0.44698579</td><td> 0.08303514</td><td>NA</td><td>...</td><td>-0.3149741</td><td>-0.15665186</td><td>Yes</td><td>No </td><td> 3.52046969</td><td> 0.41097443</td><td>-0.3205259</td><td>0</td><td>0</td><td>1</td></tr>
-	<tr><td>25</td><td>1999-2000</td><td> 0.4554018</td><td>-0.30241170</td><td> 1.8469600</td><td> 0.6662945</td><td>-0.91889215</td><td> 0.23969339</td><td> 1.64051147</td><td>NA</td><td>...</td><td>-0.1462465</td><td>-0.50300812</td><td>No </td><td>No </td><td> 0.14309895</td><td> 1.18823878</td><td> 0.1012401</td><td>0</td><td>1</td><td>0</td></tr>
-	<tr><td>26</td><td>1999-2000</td><td>-0.6703603</td><td>         NA</td><td> 0.9885143</td><td> 0.9566136</td><td> 1.38980752</td><td>-0.64317984</td><td> 0.91715914</td><td>NA</td><td>...</td><td>-1.7045530</td><td>-1.70810555</td><td>NA </td><td>No </td><td>-0.27257745</td><td>-0.36628992</td><td>-1.1640579</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>27</td><td>1999-2000</td><td>-0.5095371</td><td>         NA</td><td> 0.2069443</td><td> 0.7718651</td><td>         NA</td><td>         NA</td><td> 0.32593205</td><td>NA</td><td>...</td><td> 0.1742682</td><td>-0.78486439</td><td>NA </td><td>NA </td><td>         NA</td><td> 0.79960660</td><td>-0.1096429</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>28</td><td>1999-2000</td><td>-0.5095371</td><td>         NA</td><td>-0.2286849</td><td> 0.4947423</td><td> 0.23545769</td><td>-0.29984025</td><td>-0.78311923</td><td>NA</td><td>...</td><td> 1.1260368</td><td> 0.89798480</td><td>NA </td><td>NA </td><td> 0.74063377</td><td>-1.53218644</td><td>-1.5858239</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>29</td><td>1999-2000</td><td> 1.2595176</td><td>         NA</td><td> 1.0910153</td><td> 0.8246504</td><td> 2.73654900</td><td> 3.57499225</td><td> 1.55242798</td><td>NA</td><td>...</td><td>-0.6951142</td><td> 0.17731817</td><td>Yes</td><td>NA </td><td>-0.22061790</td><td> 0.02234225</td><td> 0.4175646</td><td>1</td><td>0</td><td>1</td></tr>
-	<tr><td>30</td><td>1999-2000</td><td>-0.9518008</td><td>         NA</td><td>-1.4330715</td><td>-0.7457118</td><td>         NA</td><td>         NA</td><td>-1.55585170</td><td>NA</td><td>...</td><td> 1.8516673</td><td> 0.56299342</td><td>NA </td><td>NA </td><td> 1.26022927</td><td>         NA</td><td>        NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td></td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>
-	<tr><td>83702</td><td>2013-2014</td><td> 1.9832218</td><td>-0.65078964</td><td> 0.6681987</td><td> 0.45515338</td><td> 1.77459080</td><td> 0.94108712</td><td> 0.34595102</td><td>NA</td><td>...</td><td> 0.01661581</td><td>-0.10435859</td><td>No </td><td>NA</td><td>-0.06473925</td><td> 1.83595906</td><td> 1.682862654</td><td>0</td><td>1</td><td>0</td></tr>
-	<tr><td>83703</td><td>2013-2014</td><td>-0.3487140</td><td> 3.18136770</td><td> 1.2063289</td><td> 0.85104299</td><td>-0.14932559</td><td> 0.06311874</td><td> 1.32020786</td><td>NA</td><td>...</td><td>-0.95981204</td><td>-0.59770301</td><td>No </td><td>NA</td><td>-0.71423363</td><td>-0.10720180</td><td> 0.628447624</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83704</td><td>2013-2014</td><td>-0.6301545</td><td>         NA</td><td> 2.2185261</td><td> 1.12816572</td><td> 1.00502424</td><td>-0.11345590</td><td> 1.86739320</td><td>NA</td><td>...</td><td> 0.17822366</td><td> 0.53259424</td><td>NA </td><td>NA</td><td>-1.05197070</td><td>-4.25261166</td><td>-0.109642897</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83705</td><td>2013-2014</td><td> 0.1739613</td><td>         NA</td><td> 0.6041356</td><td> 0.66629451</td><td> 0.04306605</td><td> 0.58793783</td><td> 0.03899339</td><td>NA</td><td>...</td><td>-0.73717745</td><td>-0.56396742</td><td>Yes</td><td>NA</td><td> 0.55877535</td><td> 0.54051849</td><td>-0.847733419</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83706</td><td>2013-2014</td><td>-0.9920066</td><td>         NA</td><td>-1.5099472</td><td>-1.20758297</td><td>         NA</td><td>         NA</td><td>-1.45575682</td><td>NA</td><td>...</td><td>        NaN</td><td>        NaN</td><td>NA </td><td>NA</td><td> 1.07837084</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83707</td><td>2013-2014</td><td>-0.5095371</td><td> 4.22650152</td><td> 0.2581948</td><td> 0.16483434</td><td> 0.42784933</td><td>-0.28512570</td><td>-0.37473212</td><td>NA</td><td>...</td><td>-0.81515607</td><td>-0.97838911</td><td>NA </td><td>NA</td><td> 0.01320007</td><td>-0.75492209</td><td>-0.847733419</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83708</td><td>2013-2014</td><td> 1.3399291</td><td>-0.30241170</td><td> 2.5260290</td><td> 1.27332524</td><td> 1.19741588</td><td> 2.69211902</td><td> 3.21533759</td><td>NA</td><td>...</td><td> 0.41272457</td><td>-0.08888355</td><td>Yes</td><td>NA</td><td>-1.18186958</td><td> 0.15188631</td><td>-1.374940934</td><td>1</td><td>0</td><td>1</td></tr>
-	<tr><td>83709</td><td>2013-2014</td><td>-0.2683024</td><td>-0.65078964</td><td> 0.3991336</td><td> 0.40236810</td><td> 0.62024097</td><td> 1.11275691</td><td>-0.13450440</td><td>NA</td><td>...</td><td> 0.48900799</td><td> 0.70189123</td><td>No </td><td>NA</td><td>-0.24659768</td><td> 0.02234225</td><td>-0.004201394</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83710</td><td>2013-2014</td><td>-1.1528298</td><td>         NA</td><td>-1.6124482</td><td>-2.10493274</td><td>         NA</td><td>         NA</td><td>-1.18883714</td><td>NA</td><td>...</td><td>-1.43672472</td><td>-1.16749416</td><td>NA </td><td>NA</td><td>         NA</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83711</td><td>2013-2014</td><td> 0.2945786</td><td>         NA</td><td> 0.5016346</td><td> 0.11204906</td><td> 0.81263261</td><td>-1.16309407</td><td> 1.09332613</td><td>NA</td><td>...</td><td>-1.12820064</td><td>-0.85706476</td><td>No </td><td>No</td><td>-0.66227408</td><td> 0.79960660</td><td>-0.320525903</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83712</td><td>2013-2014</td><td> 1.2193118</td><td>-0.65078964</td><td> 0.7066366</td><td> 1.15455836</td><td>-0.53410887</td><td> 0.06311874</td><td> 0.62621669</td><td>NA</td><td>...</td><td> 1.55132534</td><td>-0.07588451</td><td>No </td><td>NA</td><td>-1.38970777</td><td> 0.54051849</td><td> 0.523006121</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83713</td><td>2013-2014</td><td> 0.1337555</td><td>         NA</td><td>        NA</td><td>         NA</td><td>-0.91889215</td><td>-0.11345590</td><td>-0.21458031</td><td>NA</td><td>...</td><td> 0.04486893</td><td> 1.01974865</td><td>No </td><td>NA</td><td>-0.37649655</td><td> 0.54051849</td><td>-0.109642897</td><td>0</td><td>1</td><td>0</td></tr>
-	<tr><td>83714</td><td>2013-2014</td><td>-0.4693314</td><td>         NA</td><td> 0.4888220</td><td> 0.09885274</td><td>-0.14932559</td><td>-0.63827499</td><td> 0.37264299</td><td>NA</td><td>...</td><td>-0.84340919</td><td>-0.49463922</td><td>NA </td><td>NA</td><td>-1.38970777</td><td> 0.02234225</td><td>-0.425967406</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83715</td><td>2013-2014</td><td> 1.0986944</td><td>         NA</td><td> 0.7706997</td><td> 0.66629451</td><td> 0.62024097</td><td>-0.11345590</td><td> 0.13241528</td><td>NA</td><td>...</td><td> 0.81222369</td><td> 0.73748383</td><td>No </td><td>NA</td><td>-0.11669880</td><td> 0.79960660</td><td>-0.004201394</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83716</td><td>2013-2014</td><td>-0.5497429</td><td>         NA</td><td> 0.5144472</td><td> 0.69268715</td><td>-0.14932559</td><td>-0.11345590</td><td>-0.16119637</td><td>NA</td><td>...</td><td> 0.82126469</td><td> 0.31161061</td><td>NA </td><td>NA</td><td> 0.14309895</td><td>-0.49583398</td><td>-1.269499431</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83717</td><td>2013-2014</td><td> 1.9832218</td><td>         NA</td><td>-0.5361879</td><td> 0.04606746</td><td> 0.81263261</td><td> 1.28933156</td><td>-0.53488392</td><td>NA</td><td>...</td><td>-1.14458745</td><td>-0.84777974</td><td>No </td><td>NA</td><td> 0.14309895</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83718</td><td>2013-2014</td><td> 1.1791060</td><td>         NA</td><td> 0.3991336</td><td> 0.56072395</td><td> 0.42784933</td><td>-0.28512570</td><td> 0.27922110</td><td>NA</td><td>...</td><td>        NaN</td><td>        NaN</td><td>Yes</td><td>NA</td><td> 1.28620904</td><td>-0.10720180</td><td>-0.109642897</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83719</td><td>2013-2014</td><td>-1.1126240</td><td>         NA</td><td>        NA</td><td>         NA</td><td>         NA</td><td>         NA</td><td>-1.42906485</td><td>NA</td><td>...</td><td>        NaN</td><td>        NaN</td><td>NA </td><td>NA</td><td>         NA</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83720</td><td>2013-2014</td><td> 0.2141671</td><td>-0.65078964</td><td> 0.6169482</td><td> 1.10177308</td><td>-0.91889215</td><td>-0.46170034</td><td>-0.18788834</td><td>NA</td><td>...</td><td>        NaN</td><td>        NaN</td><td>No </td><td>NA</td><td> 1.41610792</td><td> 1.31778283</td><td> 0.312123115</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83721</td><td>2013-2014</td><td> 0.8574597</td><td>-0.65078964</td><td> 0.3606957</td><td> 0.74547243</td><td> 0.42784933</td><td>-0.11345590</td><td> 0.03899339</td><td>NA</td><td>...</td><td>-0.78916319</td><td>-0.74750145</td><td>No </td><td>NA</td><td> 0.14309895</td><td> 0.67006254</td><td>-0.531408909</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83722</td><td>2013-2014</td><td>-1.2332413</td><td>         NA</td><td>        NA</td><td>         NA</td><td>         NA</td><td>         NA</td><td>         NA</td><td>NA</td><td>...</td><td>-1.28528800</td><td>-1.73233328</td><td>NA </td><td>NA</td><td>         NA</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83723</td><td>2013-2014</td><td> 1.2193118</td><td>-0.30241170</td><td> 0.9757016</td><td> 0.93022091</td><td> 0.42784933</td><td> 0.76451247</td><td> 1.03994219</td><td>NA</td><td>...</td><td>-0.04158562</td><td> 0.62915852</td><td>No </td><td>NA</td><td>-0.24659768</td><td> 0.15188631</td><td> 1.050213636</td><td>1</td><td>0</td><td>0</td></tr>
-	<tr><td>83724</td><td>2013-2014</td><td> 1.9832218</td><td>         NA</td><td> 0.3606957</td><td> 0.40236810</td><td> 1.77459080</td><td> 2.33896973</td><td>-0.05442850</td><td>NA</td><td>...</td><td>-0.09300630</td><td> 0.48957362</td><td>No </td><td>NA</td><td>-0.11669880</td><td> 0.02234225</td><td> 2.631836181</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83725</td><td>2013-2014</td><td>-0.9518008</td><td>         NA</td><td>-1.2793200</td><td>-0.94365656</td><td>         NA</td><td>         NA</td><td>-1.21552911</td><td>NA</td><td>...</td><td>        NaN</td><td>        NaN</td><td>NA </td><td>NA</td><td>-0.37649655</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83726</td><td>2013-2014</td><td> 0.3749902</td><td>         NA</td><td> 0.3606957</td><td> 0.79825771</td><td>         NA</td><td>         NA</td><td> 0.19914520</td><td>NA</td><td>...</td><td>        NaN</td><td>        NaN</td><td>No </td><td>NA</td><td>         NA</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83727</td><td>2013-2014</td><td>-0.1878908</td><td> 0.04596624</td><td> 0.2197569</td><td> 0.29679754</td><td> 1.38980752</td><td> 0.06311874</td><td>-0.10781244</td><td>NA</td><td>...</td><td> 2.93064270</td><td> 2.76100066</td><td>No </td><td>NA</td><td> 0.14309895</td><td> 0.67006254</td><td>-0.320525903</td><td>0</td><td>1</td><td>0</td></tr>
-	<tr><td>83728</td><td>2013-2014</td><td>-1.1528298</td><td>         NA</td><td>-1.7277618</td><td>-2.17091434</td><td>         NA</td><td>         NA</td><td>-1.25556706</td><td>NA</td><td>...</td><td>-1.00275679</td><td>-0.85985027</td><td>NA </td><td>NA</td><td>         NA</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83729</td><td>2013-2014</td><td> 0.4554018</td><td>         NA</td><td> 1.1294531</td><td> 0.61350923</td><td>-0.14932559</td><td>-0.46170034</td><td> 1.16005605</td><td>NA</td><td>...</td><td>-0.43260881</td><td> 0.26611397</td><td>No </td><td>NA</td><td>-0.32453700</td><td> 0.92915066</td><td> 1.050213636</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83730</td><td>2013-2014</td><td>-0.9518008</td><td>         NA</td><td>-1.1768190</td><td>-0.91726392</td><td>         NA</td><td>         NA</td><td>-1.22887509</td><td>NA</td><td>...</td><td>        NaN</td><td>        NaN</td><td>NA </td><td>NA</td><td>-0.11669880</td><td>         NA</td><td>          NA</td><td>0</td><td>0</td><td>0</td></tr>
-	<tr><td>83731</td><td>2013-2014</td><td>-0.7909777</td><td>         NA</td><td>-0.4080616</td><td>-0.16507367</td><td>         NA</td><td>         NA</td><td>-0.80180360</td><td>NA</td><td>...</td><td> 0.03243756</td><td>-0.01150833</td><td>NA </td><td>NA</td><td>         NA</td><td>-0.23674586</td><td>-1.480382437</td><td>0</td><td>0</td><td>0</td></tr>
-</tbody>
-</table>
-
-
 
 
 ```R
-#jupyter nbconvert --to markdown R_replicate_Dinh.ipynb --output README.md
+c(X_train, y_train, control_cv) %<-% data_ml_pipeline(data=train_data, 
+                                          numerical_vars=numerical_vars, 
+                                          categorical_vars=categorical_vars)
+
+c(X_test, y_test, control_cv) %<-% data_ml_pipeline(data=test_data, 
+                                          numerical_vars=numerical_vars, 
+                                          categorical_vars=categorical_vars)
 ```
 
-## 3. Model Development
-
-### 3.1 Train/Test split
-
-The paper do a 80/20 split to train the model, trying to keep the target class proportions of the NHANES population in train and test sets:
-
-> Downsampling was used to produce a balanced 80/20 train/test split.
-
-
-```R
-print("% of cases of Diabetes:")
-print(sum(df_formatted$Diabetes_Case_I) * 100 / nrow(df_formatted))
-
-print("% of cases of Undiagnosed Diabetes:")
-print(sum(df_formatted$Diabetes_Case_II) * 100 / nrow(df_formatted))
-
-print("% of cases of CVD:")
-print(sum(df_formatted$CVD) * 100 / nrow(df_formatted))
-```
-
-    [1] "% of cases of Diabetes:"
-    [1] 7.150601
-    [1] "% of cases of Undiagnosed Diabetes:"
-    [1] 7.801099
-    [1] "% of cases of CVD:"
-    [1] 5.637646
-
-
-
-```R
-library(caret)
-
-```
-
-
-    Error in library(caret): there is no package called 'caret'
-    Traceback:
-
-
-    1. library(caret)
-
+### 3.3 Predictive Models
 
 Models used in the paper:
 
@@ -973,19 +889,96 @@ Models used in the paper:
 - Support Vector Machine
 - Random Forest
 - Gradient Boosted Trees
-- Ensemble model of the 5 models.   
+- Ensemble model of the 5 models.  
 
 
 ```R
+set.seed(SEED)
+
+# Model 1 : Logistic Regression
+lr <- train(x = X_train,
+            y = y_train,
+            method="glm",
+            family="binomial",
+            metric="AUC",
+            trControl=control_cv,
+            tuneLength=1
+                      )
+
+
+```
+
+    Warning message in train.default(x = X_train, y = y_train, method = "glm", family = "binomial", :
+    "The metric "AUC" was not in the result set. ROC will be used instead."
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+    Warning message:
+    "Setting row names on a tibble is deprecated."
+    Warning message:
+    "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+
+
+## Model Comparison
+
+
+```R
+model_auc <- function(model, X_data, y_data) {
+
+    # AUC 
+    predictions <- predict(model, newdata = X_data, type = "prob")
+    roc_score <- roc(y_data, predictions[, "Yes"], quiet = TRUE)
+    auc_score <- round(auc(roc_score), 3)
+
+    # Message 
+    data_name <- deparse(substitute(X_data))
+    glue("AUC score for Logistic Regression on {data_name}: {auc_score} ")
+}
+
+model_auc(lr, X_test, y_test)
 
 ```
 
 
+'AUC score for Logistic Regression on X_test: 0.959 '
+
+
+
 ```R
-
-```
-
-
-```R
-
+#jupyter nbconvert --to markdown R_replicate_Dinh.ipynb --output README.md
 ```
