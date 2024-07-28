@@ -97,8 +97,7 @@ def train_model(X_train, y_train, model):
 
     return grid.fit(X_train, y_train)
 
-
- if __name__ == "__main__":
-     target = 'Diabetes_Case_I'
-     X_train, X_test, y_train, y_test = split(df, target)
-     model = train_model(X_train, y_train, "LogisticRegression")
+if __name__ == "__main__":
+    target = 'Diabetes_Case_I'
+    X_train, X_test, y_train, y_test = split(df, target)
+    model = train_model(X_train, y_train, "LogisticRegression")
