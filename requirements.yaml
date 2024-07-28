@@ -1,0 +1,17 @@
+name: nhanes_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - pandas
+  - lxml
+  - pyreadstat
+  - openpyxl
+  - scikit-learn
+  - pyarrow
+  - fastparquet
+  - requests
+  - beautifulsoup4
+  - inquirer

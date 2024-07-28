@@ -1,7 +1,0 @@
-pyarrow
-pandas
-numpy
-lxml
-pyreadstat
-openpyxl
-scikit-learn
