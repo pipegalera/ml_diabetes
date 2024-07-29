@@ -1,0 +1,10 @@
+## Replication resuls for Dinh et al. (2019) "A data-driven approach to predicting diabetes and cardiovascular disease with machine learning."
+
+[https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-019-0918-5
+](url)
+
+## Brief Summary
+
+Dinh et al. (2019) uses different ML models (logistic regression, support vector machines, random forest, and gradient boosting) on NHANES dataset to predict i) Diabetes and ii) Cardiovascular disease ("CVD").
+
+**Goal**: Identification mechanism for patients at risk of diabetes and cardiovascular diseases and key contributors to diabetes .

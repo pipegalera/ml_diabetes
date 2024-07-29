@@ -1,0 +1,15 @@
+artifact_uri: file:///root/dev/ml_diabetes/src/mlruns/687933135116274831/cd91e27dcfdf47879050304ac10f4da4/artifacts
+end_time: 1722248401407
+entry_point_name: ''
+experiment_id: '687933135116274831'
+lifecycle_stage: active
+run_id: cd91e27dcfdf47879050304ac10f4da4
+run_name: serious-panda-403
+run_uuid: cd91e27dcfdf47879050304ac10f4da4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1722248330400
+status: 3
+tags: []
+user_id: root
