@@ -53,7 +53,7 @@ def split(df, target:str):
         print("Test and Train set have different target proportions")
 
 
-logistic_regression_params = {
+param_dist_log = {
         'estimator': [LogisticRegression(random_state=SEED)],
         'estimator__C': uniform(0.1, 10),
         'estimator__penalty': ['l1', 'l2'],
@@ -64,7 +64,15 @@ param_dist_svc = {
     'estimator': [SVC(random_state=SEED)],
     'estimator__C': uniform(0.1, 5),
     'estimator__gamma': loguniform(1e-3, 1),
-    'estimator__kernel': ['rbf', 'linear']
+    'estimator__kernel': ['linear']
+}
+
+param_dist_rf = {
+    'estimator': [RandomForestClassifier(random_state=SEED)],
+    'estimator__n_estimators': randint(50, 200),
+    'estimator__max_features': ['sqrt', 'log2'],
+    'estimator__max_depth': randint(1, 10),
+    'estimator__criterion': ['gini', 'entropy']
 }
 
 def model_pipeline(X_train, y_train, model_params):
@@ -118,6 +126,7 @@ def run_model(X_train, X_test,
         # Predict
         y_pred = model_pipeline.predict(X_test)
         y_pred_proba = model_pipeline.predict_proba(X_test)[:, 1]
+        target_name = y_train.reset_index().columns[1]
 
         # Accuracy Metrics
         best_score = model_pipeline.best_score_
@@ -129,16 +138,19 @@ def run_model(X_train, X_test,
         # Log model parameters
         mlflow.log_params(model_pipeline.best_params_)
         mlflow.sklearn.log_model(model_pipeline.best_estimator_, "model")
-        mlflow.set_tag("Target", target)
+        mlflow.set_tag("Target", target_name)
         mlflow.log_metric("Train ROC-AUC", best_score)
         mlflow.log_metric("AUC", auc)
         mlflow.log_metric("Precision", precision)
         mlflow.log_metric("Recall", recall)
         mlflow.log_metric("F1-score", f1)
 
-if __name__ == "__main__":
-    target = 'Diabetes_Case_I'
-    model = param_dist_svc
+
+def main(data, target, params):
     X_train, X_test, y_train, y_test = split(df, target)
-    pipeline = model_pipeline(X_train, y_train, model)
+    pipeline = model_pipeline(X_train, y_train, params)
     run_model(X_train, X_test, y_train, y_test, pipeline)
+
+
+if __name__ == "__main__":
+    main(df, 'CVD', param_dist_log)
