@@ -1,0 +1,16 @@
+artifact_uri: file:///root/dev/ml_diabetes/src/mlruns/687933135116274831/e2bae3b940fa480f99baf283671c3e7e/artifacts
+deleted_time: 1722248348342
+end_time: 1722247490720
+entry_point_name: ''
+experiment_id: '687933135116274831'
+lifecycle_stage: deleted
+run_id: e2bae3b940fa480f99baf283671c3e7e
+run_name: sassy-flea-354
+run_uuid: e2bae3b940fa480f99baf283671c3e7e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1722247409298
+status: 3
+tags: []
+user_id: root

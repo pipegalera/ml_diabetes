@@ -1,0 +1,15 @@
+artifact_uri: file:///root/dev/ml_diabetes/src/mlruns/687933135116274831/c2b468fb63e74ca79dc82aae3ccb31ef/artifacts
+end_time: 1722248581521
+entry_point_name: ''
+experiment_id: '687933135116274831'
+lifecycle_stage: active
+run_id: c2b468fb63e74ca79dc82aae3ccb31ef
+run_name: puzzled-penguin-561
+run_uuid: c2b468fb63e74ca79dc82aae3ccb31ef
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1722248499338
+status: 3
+tags: []
+user_id: root

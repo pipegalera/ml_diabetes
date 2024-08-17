@@ -1,0 +1,16 @@
+artifact_uri: file:///root/dev/ml_diabetes/src/mlruns/0/3d62e58c237c41198fbc26c2cc7918ae/artifacts
+deleted_time: 1722247799471
+end_time: 1722244769945
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 3d62e58c237c41198fbc26c2cc7918ae
+run_name: dashing-ray-979
+run_uuid: 3d62e58c237c41198fbc26c2cc7918ae
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1722244688919
+status: 3
+tags: []
+user_id: root

@@ -1,0 +1,15 @@
+artifact_uri: file:///root/dev/ml_diabetes/src/mlruns/687933135116274831/e204ed00fba74759be7abb2f8ef7d0db/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '687933135116274831'
+lifecycle_stage: active
+run_id: e204ed00fba74759be7abb2f8ef7d0db
+run_name: caring-calf-290
+run_uuid: e204ed00fba74759be7abb2f8ef7d0db
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1722248712027
+status: 1
+tags: []
+user_id: root
