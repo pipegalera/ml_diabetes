@@ -4,10 +4,12 @@ import os
 import re
 from glob import glob
 from sklearn.base import BaseEstimator, TransformerMixin
+from dotenv import load_dotenv
 
-RAW_DATA_PATH = "/root/dev/ml_diabetes/data/raw_data/NHANES/"
-PROC_DATA_PATH = "/root/dev/ml_diabetes/data/processed/NHANES/"
-SEED = 4208
+load_dotenv()
+
+RAW_DATA_PATH = os.getenv("RAW_DATA_PATH")
+PROC_DATA_PATH = os.getenv("PROC_DATA_PATH")
 
 
 def compile_data(variable_list,

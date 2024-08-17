@@ -2,9 +2,7 @@
 Downloading the files takes from 15 min to 30 min per year with high speed internet, the good thing is that in can get interrupted at it skips the files already downloaded - just make sure the last file was correctly writen.
 """
 
-from utils import RAW_DATA_PATH,PROC_DATA_PATH
 import os
-#%load_ext cudf.pandas
 from glob import glob
 import requests
 from bs4 import BeautifulSoup
@@ -12,6 +10,12 @@ import io
 import pyreadstat
 import tempfile
 import inquirer
+from dotenv import load_dotenv
+
+load_dotenv()
+
+RAW_DATA_PATH = os.getenv("RAW_DATA_PATH")
+PROC_DATA_PATH = os.getenv("PROC_DATA_PATH")
 
 def scrape_nhanes_xpt_files(year, DATA_PATH=RAW_DATA_PATH):
     """

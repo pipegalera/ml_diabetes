@@ -12,9 +12,13 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import roc_auc_score, recall_score, precision_score, f1_score
 
 from utils import ConvertToCategory, MissingValueCategoryAs999
-from utils import PROC_DATA_PATH,SEED
+import os
+from dotenv import load_dotenv
 
-PROC_DATA_PATH = '/Users/pipegalera/dev/ml_diabetes/data/processed/NHANES/'
+load_dotenv()
+
+SEED = os.getenv("SEED")
+PROC_DATA_PATH = os.getenv("PROC_DATA_PATH")
 
 df = pd.read_csv(PROC_DATA_PATH + "Dinh_2019_clean_data.csv")
 
