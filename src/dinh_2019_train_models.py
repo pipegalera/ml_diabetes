@@ -1,5 +1,6 @@
-import pandas as pd
-from scipy.stats import uniform, loguniform, randint
+from warnings import simplefilter
+from sklearn.exceptions import ConvergenceWarning
+simplefilter("ignore", category=ConvergenceWarning)
 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -12,18 +13,33 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.base import BaseEstimator
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
 
+import pandas as pd
+from scipy.stats import uniform, loguniform, randint
+import xgboost as xgb
 from utils import ConvertToCategory, MissingValueCategoryAs999
+import sys
+import argparse
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SEED = os.getenv("SEED")
+SEED = int(os.getenv("SEED"))
 PROC_DATA_PATH = os.getenv("PROC_DATA_PATH")
+
 
 df = pd.read_csv(PROC_DATA_PATH + "Dinh_2019_clean_data.csv")
 
-def split(df, target:str):
+## Downsample
+df['strata'] = (df['Diabetes_Case_I'].astype(str) +
+          '_' + df['Diabetes_Case_II'].astype(str) +
+          '_' + df['CVD'].astype(str))
+index_to_drop = df[df['strata'] == '0_0_0'].sample(frac=0.75).index
+df = df.drop(index_to_drop).reset_index(drop=True)
+df = df.drop('strata', axis=1)
+
+
+def stratified_split(df, target:str):
 
     X = df.drop(columns= [
         'Diabetes_Case_I',
@@ -44,30 +60,30 @@ def split(df, target:str):
                                                         random_state=SEED,
                                                         stratify=strata)
 
-    train_target_pcr = round(y_train.reset_index()[target].sum()/len(y_train),5)
-    test_target_pcr = round(y_test.reset_index()[target].sum()/len(y_test),5)
+    train_target_pcr = round(y_train.reset_index()[target].sum()/len(y_train),3)
+    test_target_pcr = round(y_test.reset_index()[target].sum()/len(y_test),3)
 
-    if train_target_pcr == test_target_pcr:
-        return X_train, X_test, y_train, y_test
+    if train_target_pcr != test_target_pcr:
+        raise ValueError("Test and Train set have different target proportions")
     else:
-        print("Test and Train set have different target proportions")
+        return X_train, X_test, y_train, y_test
 
 
-param_dist_log = {
-        'estimator': [LogisticRegression(random_state=SEED)],
+logistic_regression = {
+        'estimator': [LogisticRegression(random_state=SEED, max_iter=10_000)],
         'estimator__C': uniform(0.1, 10),
         'estimator__penalty': ['l1', 'l2'],
         'estimator__solver': ['liblinear', 'saga'],
     }
 
-param_dist_svc = {
+support_vector_machine = {
     'estimator': [SVC(random_state=SEED)],
     'estimator__C': uniform(0.1, 5),
     'estimator__gamma': loguniform(1e-3, 1),
     'estimator__kernel': ['linear']
 }
 
-param_dist_rf = {
+random_forest = {
     'estimator': [RandomForestClassifier(random_state=SEED)],
     'estimator__n_estimators': randint(50, 200),
     'estimator__max_features': ['sqrt', 'log2'],
@@ -75,7 +91,18 @@ param_dist_rf = {
     'estimator__criterion': ['gini', 'entropy']
 }
 
-def model_pipeline(X_train, y_train, model_params):
+xgb = {
+    'estimator': [xgb.XGBClassifier(random_state=SEED)],
+    'estimator__n_estimators': randint(50, 200),
+    'estimator__learning_rate': [0.01,0.05,0.1],
+    'estimator__max_depth': randint(1, 10),
+    'estimator__gamma': [0, 0.5, 1],
+    'estimator__reg_alpha': [0, 0.5, 1],
+    'estimator__reg_lambda': [0.5, 1, 5],
+    'estimator__base_score': [0.2, 0.5, 1]
+}
+
+def model_pipeline(X_train, y_train, model):
     # Categorical variables
     categorical_vars = [ 'Race_ethnicity', 'General_health', 'Health_status', 'Told_High_Cholesterol', 'Household_income', 'Relative_Had_Diabetes']
 
@@ -99,12 +126,12 @@ def model_pipeline(X_train, y_train, model_params):
 
     pipeline = Pipeline([
         ('preprocessor', preprocessor),
-        ('estimator', model_params)
+        ('estimator', model)
     ])
 
     grid = RandomizedSearchCV(
         pipeline,
-        param_distributions=model_params,
+        param_distributions=model,
         n_iter=50,
         scoring='roc_auc',
         random_state=SEED,
@@ -113,44 +140,51 @@ def model_pipeline(X_train, y_train, model_params):
     )
     return grid
 
+
 def run_model(X_train, X_test,
               y_train, y_test,
               model_pipeline):
 
-    # Start MLflow run
-    mlflow.set_experiment("Dinh et al. 2019")
-    with mlflow.start_run():
-        # Fit model
-        model_pipeline.fit(X_train, y_train)
+    # Fit model
+    model_pipeline.fit(X_train, y_train)
 
-        # Predict
-        y_pred = model_pipeline.predict(X_test)
-        y_pred_proba = model_pipeline.predict_proba(X_test)[:, 1]
-        target_name = y_train.reset_index().columns[1]
+    # Predict
+    y_pred = model_pipeline.predict(X_test)
+    y_pred_proba = model_pipeline.predict_proba(X_test)[:, 1]
 
-        # Accuracy Metrics
-        best_score = model_pipeline.best_score_
-        auc = roc_auc_score(y_test, y_pred_proba)
-        precision = precision_score(y_test, y_pred)
-        recall = recall_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred)
+    # Metrics
+    auc = roc_auc_score(y_test, y_pred_proba).round(3)
+    precision = precision_score(y_test, y_pred).round(3)
+    recall = recall_score(y_test, y_pred).round(3)
+    f1 = f1_score(y_test, y_pred).round(3)
 
-        # Log model parameters
-        mlflow.log_params(model_pipeline.best_params_)
-        mlflow.sklearn.log_model(model_pipeline.best_estimator_, "model")
-        mlflow.set_tag("Target", target_name)
-        mlflow.log_metric("Train ROC-AUC", best_score)
-        mlflow.log_metric("AUC", auc)
-        mlflow.log_metric("Precision", precision)
-        mlflow.log_metric("Recall", recall)
-        mlflow.log_metric("F1-score", f1)
+    # create a table
+    metrics = {
+        'Case': y_train.reset_index().columns[1],
+        'Model': model_pipeline.param_distributions['estimator'],
+        'AUC': [auc],
+        'Precision': [precision],
+        'Recall': [recall],
+        'F1': [f1]
+    }
+
+    return pd.DataFrame(metrics)
 
 
-def main(data, target, params):
-    X_train, X_test, y_train, y_test = split(df, target)
-    pipeline = model_pipeline(X_train, y_train, params)
-    run_model(X_train, X_test, y_train, y_test, pipeline)
+def main(data):
+    table_metrics = pd.DataFrame()
+    models = [logistic_regression, random_forest]
+    targets = ['Diabetes_Case_I', 'Diabetes_Case_II', 'CVD']
+
+    for target in targets:
+        for model in models:
+            X_train, X_test, y_train, y_test = stratified_split(df, target)
+            pipeline = model_pipeline(X_train, y_train, model)
+            metrics = run_model(X_train, X_test, y_train, y_test, pipeline)
+            table_metrics = pd.concat([table_metrics, metrics], ignore_index=True)
+
+    print(table_metrics)
 
 
 if __name__ == "__main__":
-    main(df, 'CVD', param_dist_log)
+    main(df)

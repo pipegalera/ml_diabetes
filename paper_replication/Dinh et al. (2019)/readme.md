@@ -15,25 +15,24 @@ Dinh et al. (2019) uses different ML models (logistic regression, support vector
 
 Best scores:
 
-- CVB prediction based on 131 NHANES variables achieved an AU-ROC score of 83.9% .
+- CVD prediction based on 131 NHANES variables achieved an AU-ROC score of 83.9% .
 - Diabetes prediction based on 123 NHANES variables achieved an AU-ROC score of 95.7% .
 - Pre-diabetic prediction based on 123 NHANES variables achieved an AU-ROC score of 84.4% .
 - Top 5 predictors in diabetes patients were 1) `waist size`, 2) `age`, 3) `self-reported weight`, 4) `leg length`, 5) `sodium intake`.
 
 
+This notebook replicates the results of the paper. The structure follows the following steps:
 
-This notebook replicates the results of the paper. The structure follows the following steps: 
-
-1. NHANES data 
+1. NHANES data
 2. Pre-processing of the data
 3. Transformation of the data
-4. Train/Test Split 
+4. Train/Test Split
 5. CV 10-fold
 6. Training monitoring using MLflow
 7. Get metric results (AUC)
 
 
-The structure of the analysis emulates the Figure 1 from the paper: 
+The structure of the analysis emulates the Figure 1 from the paper:
 
 ![Fig 1 from Dinh et al. 2019](https://raw.githubusercontent.com/pipegalera/ml_diabetes/main/images/dinh_2019_Fig1.png)
 
@@ -57,7 +56,7 @@ DINH_DOCS_PATH <- "/Users/pipegalera/dev/ml_diabetes/data/processed/NHANES/"
 
 ## 1. HNANES data
 
-### Covariates and Targets 
+### Covariates and Targets
 
 - Source: https://www.cdc.gov/nchs/index.htm
 - Downloaded raw data via: `notebooksnhanes_data_backfill`
@@ -126,9 +125,9 @@ head(dinh_2019_vars[c("Variable Name", "NHANES Name")], n=15)
 
 For the complete list of variables, check the file `dinh_2019_variables_doc.xlsx` under NHANES data folder.
 
-NHANES data is made by multiple files (see `NHANES` unde data folder) that have to be compiled together. The data was downloaded automatically via script, all the files converted from SAS to parquet, and the files were stacked and merged based on the individual index ("SEQN"). For more details please check the `nhanes_data_backfill` notebook. 
+NHANES data is made by multiple files (see `NHANES` unde data folder) that have to be compiled together. The data was downloaded automatically via script, all the files converted from SAS to parquet, and the files were stacked and merged based on the individual index ("SEQN"). For more details please check the `nhanes_data_backfill` notebook.
 
-Plese notice that no transformation are made to the covariates, the files were only arranged and stacked together. 
+Plese notice that no transformation are made to the covariates, the files were only arranged and stacked together.
 
 
 ```R
@@ -190,10 +189,10 @@ colnames(df)
 
 > The preprocessing stage also converted any undecipherable values (errors in datatypes and standard formatting) from the database to null representations.
 
-For this, I've checked the variables according to their possible values in the NHANES documentation (https://wwwn.cdc.gov/nchs/nhanes/search/default.aspx). I did not found any any extreme value out of the possible ranges. However, the data is reviwed and updated after the survey, so it might be that the NCHS applied some fixes after they saw them. 
+For this, I've checked the variables according to their possible values in the NHANES documentation (https://wwwn.cdc.gov/nchs/nhanes/search/default.aspx). I did not found any any extreme value out of the possible ranges. However, the data is reviwed and updated after the survey, so it might be that the NCHS applied some fixes after they saw them.
 
 
-I have replaced "Don't know" and "Refused" for NA values and converted the intial encoding of the categorical variables to the real values in the survey - given that the encoding is not consistent accross years. For the model, I will encode the variables myself so I don't have to jungle NHANES encoding. 
+I have replaced "Don't know" and "Refused" for NA values and converted the intial encoding of the categorical variables to the real values in the survey - given that the encoding is not consistent accross years. For the model, I will encode the variables myself so I don't have to jungle NHANES encoding.
 
 All the variables can by found at  https://wwwn.cdc.gov/nchs/nhanes/search/default.aspx
 
@@ -204,7 +203,7 @@ df <- df |>
   mutate(
     ALQ130 = case_when(
       ALQ130 == 77 ~ NA,
-      ALQ130 == 99 ~ NA, 
+      ALQ130 == 99 ~ NA,
       ALQ130 == 777 ~ NA,
       ALQ130 == 999 ~ NA,
       TRUE ~ ALQ130
@@ -383,7 +382,7 @@ df <- df |>
 
 ### 2.2 Homogenize variables that are the same but are called diffrent in different NHANES years
 
-Intake variables went from 1 day in 1999 to 2001 to 2 days from 2003 on, therefore the variable has to be homogenized. Dinh et al. (2019) do not specify which examination records the authors, but my best guess is that they problably took the average of both days that the examination was performed. 
+Intake variables went from 1 day in 1999 to 2001 to 2 days from 2003 on, therefore the variable has to be homogenized. Dinh et al. (2019) do not specify which examination records the authors, but my best guess is that they problably took the average of both days that the examination was performed.
 
 This situation happends with:
 
@@ -396,7 +395,7 @@ This situation happends with:
 - Sodium intake (`DRDTSODI`, `DR1TSODI`, `DR2TSODI`)
 
 
-Also, small changes in same quesion format are registered with different codes. Examples: 
+Also, small changes in same quesion format are registered with different codes. Examples:
 
 - `MCQ250A`, `MCQ300C` and `MCQ300c`
 - `LBDHDDSI` and `LBDHDLSI`
@@ -417,7 +416,7 @@ It can be seen here:
 ```R
 # Similar questions (or the same) with different NHANES variable codes
 var_docs <- read_excel(paste0(DINH_DOCS_PATH, "dinh_2019_variables_doc.xlsx"))
-var_docs |> 
+var_docs |>
   filter(`NHANES Name` %in% c('MCQ250A', 'MCQ300C', 'MCQ300c', 'LBDHDDSI', 'LBDHDLSI', 'LBXGLUSI', 'LBDGLUSI'))
 ```
 
@@ -443,7 +442,7 @@ var_docs |>
 
 
 ```R
-var_docs |> 
+var_docs |>
   filter(`NHANES Name` %in% c('MCQ160b', 'MCQ160B', 'MCQ160c', 'MCQ160C', 'MCQ160F', 'MCQ160f', 'MCQ160E', 'MCQ160e', 'SEQ060','RHQ141','RHD143'))
 ```
 
@@ -482,8 +481,8 @@ To fix that, I will create a function that creates an average of the Intake vari
 
 ```R
 create_intake_new_column <- function(df, day0_col, day1_col, day2_col) {
-    ifelse(is.na(df[[day0_col]]), 
-           rowMeans(df[, c(day1_col, day2_col)], na.rm = TRUE), 
+    ifelse(is.na(df[[day0_col]]),
+           rowMeans(df[, c(day1_col, day2_col)], na.rm = TRUE),
            df[[day0_col]])
 }
 
@@ -534,11 +533,11 @@ df <- df |>
 #unique(df$YEAR[!is.na(df$Relative_Had_Diabetes)])
 ```
 
-### 2.3 Choosing between different readings in Blood analysis 
+### 2.3 Choosing between different readings in Blood analysis
 
-[From NHANES](https://wwwn.cdc.gov/Nchs/Nhanes/2013-2014/BPX_H.htm): 
+[From NHANES](https://wwwn.cdc.gov/Nchs/Nhanes/2013-2014/BPX_H.htm):
 
-> After resting quietly in a seated position for 5 minutes and once the participants maximum inflation level (MIL) has been determined, three consecutive blood pressure readings are obtained. If a blood pressure measurement is interrupted or incomplete, a fourth attempt may be made. All BP determinations (systolic and diastolic) are taken in the mobile examination center (MEC). 
+> After resting quietly in a seated position for 5 minutes and once the participants maximum inflation level (MIL) has been determined, three consecutive blood pressure readings are obtained. If a blood pressure measurement is interrupted or incomplete, a fourth attempt may be made. All BP determinations (systolic and diastolic) are taken in the mobile examination center (MEC).
 
 In Dinh et al. (2019) the authors do not say which readings are taking, but I'm assuming they take the last one to avoid the [white coat syndrom](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5352963/) and for data consistency.
 
@@ -562,9 +561,9 @@ df <- df |>
 
 
 ```R
-df <- df |> 
-  filter(is.na(Pregnant) | Pregnant != "Yes") |> 
-  filter(RIDAGEYR >= 20)  |> 
+df <- df |>
+  filter(is.na(Pregnant) | Pregnant != "Yes") |>
+  filter(RIDAGEYR >= 20)  |>
   select(-c(Pregnant))
 ```
 
@@ -612,7 +611,7 @@ df <- df |>
       (Glucose > 7.0 | DIQ010 == "Yes") ~ "Yes",
       TRUE ~ "No"),
     Diabetes_Case_II = case_when(
-      # Undiagnosed Diabetic 
+      # Undiagnosed Diabetic
       (Diabetes_Case_I == "No" & Glucose > 7.0 & DIQ010 == "No") ~ "Yes",
       # Prediabetic
       (Diabetes_Case_I == "No" & Glucose >= 5.6 & Glucose < 7.0) ~ "Yes",
@@ -775,14 +774,14 @@ percent_target(test_data, "CVD")
 
 > For each model, a grid-search approach with parallelized performance evaluation for model parameter tuning was used to generate the best model parameters. Next, each of the models underwent a 10-fold cross-validation (10 folds of training and testing with randomized data-split)
 
-It doesn't make so much sense to do grid-search on the entire training set before a cross-validation. The reason is that you would basically train the data before the validation set that you are using to check if the model generalize well. And then the whole purpose of the cross-validation is to check model fit outside of the training set - it would lose all purpose. 
+It doesn't make so much sense to do grid-search on the entire training set before a cross-validation. The reason is that you would basically train the data before the validation set that you are using to check if the model generalize well. And then the whole purpose of the cross-validation is to check model fit outside of the training set - it would lose all purpose.
 
-My best guess is that they used `GridSearchCV/RandomSearchCV` from sklearn and they assumed that the grid search go first. 
+My best guess is that they used `GridSearchCV/RandomSearchCV` from sklearn and they assumed that the grid search go first.
 
 
-The preprocessing also includes standarization, made also by the authors: 
+The preprocessing also includes standarization, made also by the authors:
 
-> Normalization was performed on the data using the following standardization model: x' = x−x^/σ 
+> Normalization was performed on the data using the following standardization model: x' = x−x^/σ
 
 
 
@@ -840,9 +839,9 @@ numerical_vars <- c(
 #target_vars <- c("Diabetes_Case_I", "Diabetes_Case_II", "CVD")
 
 data_ml_pipeline <- function(data,
-                            numerical_vars, 
+                            numerical_vars,
                             categorical_vars) {
-    # Target 
+    # Target
     y <-  as.factor(data[[target]])
 
     # Standarization and encoding of categorical variables.
@@ -872,12 +871,12 @@ data_ml_pipeline <- function(data,
 
 
 ```R
-c(X_train, y_train, control_cv) %<-% data_ml_pipeline(data=train_data, 
-                                          numerical_vars=numerical_vars, 
+c(X_train, y_train, control_cv) %<-% data_ml_pipeline(data=train_data,
+                                          numerical_vars=numerical_vars,
                                           categorical_vars=categorical_vars)
 
-c(X_test, y_test, control_cv) %<-% data_ml_pipeline(data=test_data, 
-                                          numerical_vars=numerical_vars, 
+c(X_test, y_test, control_cv) %<-% data_ml_pipeline(data=test_data,
+                                          numerical_vars=numerical_vars,
                                           categorical_vars=categorical_vars)
 ```
 
@@ -889,7 +888,7 @@ Models used in the paper:
 - Support Vector Machine
 - Random Forest
 - Gradient Boosted Trees
-- Ensemble model of the 5 models.  
+- Ensemble model of the 5 models.
 
 
 ```R
@@ -960,12 +959,12 @@ lr <- train(x = X_train,
 ```R
 model_auc <- function(model, X_data, y_data) {
 
-    # AUC 
+    # AUC
     predictions <- predict(model, newdata = X_data, type = "prob")
     roc_score <- roc(y_data, predictions[, "Yes"], quiet = TRUE)
     auc_score <- round(auc(roc_score), 3)
 
-    # Message 
+    # Message
     data_name <- deparse(substitute(X_data))
     glue("AUC score for Logistic Regression on {data_name}: {auc_score} ")
 }

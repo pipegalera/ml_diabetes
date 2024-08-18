@@ -10,10 +10,10 @@ dependencies:
   - pyreadstat
   - openpyxl
   - scikit-learn
+  - xgboost
   - pyarrow
   - fastparquet
   - requests
   - beautifulsoup4
   - inquirer
   - python-dotenv
-  - mlflow
