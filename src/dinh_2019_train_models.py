@@ -1,7 +1,3 @@
-from warnings import simplefilter
-from sklearn.exceptions import ConvergenceWarning
-simplefilter("ignore", category=ConvergenceWarning)
-
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -12,11 +8,16 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.base import BaseEstimator
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
+from sklearnex import patch_sklearn
+patch_sklearn()
 
 import pandas as pd
+import numpy as np
+import pickle
+import time
 from scipy.stats import uniform, loguniform, randint
 import xgboost as xgb
-from utils import ConvertToCategory, MissingValueCategoryAs999
+from utils import ConvertToCategory, MissingValueCategoryAs999,WeightedEnsemble
 import sys
 import argparse
 import os
@@ -26,7 +27,7 @@ load_dotenv()
 
 SEED = int(os.getenv("SEED"))
 PROC_DATA_PATH = os.getenv("PROC_DATA_PATH")
-
+MODEL_RESULTS_PATH = os.getenv("MODEL_RESULTS_PATH")
 
 df = pd.read_csv(PROC_DATA_PATH + "Dinh_2019_clean_data.csv")
 
@@ -77,7 +78,7 @@ logistic_regression = {
     }
 
 support_vector_machine = {
-    'estimator': [SVC(random_state=SEED)],
+    'estimator': [SVC(random_state=SEED, probability=True)],
     'estimator__C': uniform(0.1, 5),
     'estimator__gamma': loguniform(1e-3, 1),
     'estimator__kernel': ['linear']
@@ -140,51 +141,100 @@ def model_pipeline(X_train, y_train, model):
     )
     return grid
 
-
-def run_model(X_train, X_test,
-              y_train, y_test,
-              model_pipeline):
-
-    # Fit model
-    model_pipeline.fit(X_train, y_train)
-
-    # Predict
-    y_pred = model_pipeline.predict(X_test)
-    y_pred_proba = model_pipeline.predict_proba(X_test)[:, 1]
-
-    # Metrics
-    auc = roc_auc_score(y_test, y_pred_proba).round(3)
-    precision = precision_score(y_test, y_pred).round(3)
-    recall = recall_score(y_test, y_pred).round(3)
-    f1 = f1_score(y_test, y_pred).round(3)
-
-    # create a table
-    metrics = {
-        'Case': y_train.reset_index().columns[1],
-        'Model': model_pipeline.param_distributions['estimator'],
-        'AUC': [auc],
-        'Precision': [precision],
-        'Recall': [recall],
-        'F1': [f1]
+def calculate_metrics(y_true, y_pred, y_pred_proba):
+    return {
+        'AUC': [roc_auc_score(y_true, y_pred_proba).round(3)],
+        'Precision': [precision_score(y_true, y_pred).round(3)],
+        'Recall': [recall_score(y_true, y_pred).round(3)],
+        'F1': [f1_score(y_true, y_pred).round(3)],
     }
 
-    return pd.DataFrame(metrics)
+
+def run_models(X_train, X_test,
+              y_train, y_test,
+              model_pipelines):
+
+    auc_scores = []
+    fitted_models = []
+    all_metrics = []
+
+    # Fit models
+    for pipeline in model_pipelines:
+        print(f"Training model: {pipeline.param_distributions['estimator']}...")
+        start_time = time.time()
+
+        pipeline.fit(X_train, y_train)
+        filename = f'model_{pipeline.param_distributions['estimator']}.pkl'
+        with open(MODEL_RESULTS_PATH + filename, 'wb') as file:
+            pickle.dump(pipeline, file)
+
+        end_time = time.time()
+        training_time = end_time - start_time
+        print(f"Model {pipeline.param_distributions['estimator']} training time: {training_time:.2f} seconds")
+
+        y_pred = pipeline.predict(X_test)
+        y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
+
+        # Metrics
+        metrics = calculate_metrics(y_test, y_pred, y_pred_proba)
+        auc_scores.append(metrics['AUC'][0])
+        fitted_models.append(pipeline)
+
+        all_metrics.append({
+            'Case': y_train.reset_index().columns[1],
+            'Model': pipeline.param_distributions['estimator'],
+            'Training Time (seconds)': f'{training_time:.2f}',
+            **metrics
+        })
+
+    print(f"Creating AUC Weighted Ensemble...")
+    # Normalize AUC scores to use as weights
+    weights = np.array(auc_scores) / sum(auc_scores)
+
+    # Create auc weighted ensemble
+    ensemble = WeightedEnsemble(fitted_models, weights)
+
+    # Stack the ensemble model prediction to the table
+    y_pred = ensemble.predict(X_test)
+    y_pred_proba = ensemble.predict_proba(X_test)
+
+    ensemble_metrics = calculate_metrics(y_test, y_pred, y_pred_proba)
+    all_metrics.append({
+        'Case': y_train.reset_index().columns[1],
+        'Model': 'AUC Weighted Ensemble',
+        'Training Time (seconds)': 'Training not needed',
+        **ensemble_metrics
+    })
+
+    # Create a table with all metrics
+    return pd.DataFrame(all_metrics)
 
 
-def main(data):
-    table_metrics = pd.DataFrame()
-    models = [logistic_regression, random_forest]
+def main():
     targets = ['Diabetes_Case_I', 'Diabetes_Case_II', 'CVD']
+    table_metrics = pd.DataFrame()
 
     for target in targets:
-        for model in models:
-            X_train, X_test, y_train, y_test = stratified_split(df, target)
-            pipeline = model_pipeline(X_train, y_train, model)
-            metrics = run_model(X_train, X_test, y_train, y_test, pipeline)
-            table_metrics = pd.concat([table_metrics, metrics], ignore_index=True)
+        X_train, X_test, y_train, y_test = stratified_split(df, target)
+        pipeline_logistic_regression = model_pipeline(X_train, y_train, logistic_regression)
+        pipeline_logistic_svm = model_pipeline(X_train, y_train, support_vector_machine)
+        pipeline_random_forest = model_pipeline(X_train, y_train, random_forest)
+        pipeline_xgb = model_pipeline(X_train, y_train, xgb)
 
+        model_pipelines = [pipeline_logistic_regression,
+                           pipeline_logistic_svm,
+                           pipeline_random_forest,
+                           pipeline_xgb]
+
+        metrics = run_models(X_train, X_test,
+                             y_train, y_test,
+                             model_pipelines)
+
+        table_metrics = pd.concat([table_metrics, metrics], ignore_index=True)
+
+    table_metrics.to_csv(MODEL_RESULTS_PATH + "dinh_2019_results.csv", index=False)
     print(table_metrics)
 
 
 if __name__ == "__main__":
-    main(df)
+    main()
