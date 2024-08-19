@@ -3,7 +3,7 @@ import numpy as np
 import os
 import re
 from glob import glob
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -98,3 +98,22 @@ class MissingValueCategoryAs999(BaseEstimator, TransformerMixin):
         for col in self.columns:
             X[col] = X[col].cat.add_categories(999).fillna(999)
         return X
+
+
+class WeightedEnsemble(BaseEstimator, ClassifierMixin):
+    def __init__(self, models, weights):
+        self.models = models
+        self.weights = weights
+
+    def fit(self, X, y):
+        for model in self.models:
+            model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        predictions = np.array([model.predict_proba(X)[:, 1] for model in self.models])
+        return np.average(predictions, axis=0, weights=self.weights)
+
+    def predict(self, X):
+        probas = self.predict_proba(X)
+        return (probas >= 0.5).astype(int)
