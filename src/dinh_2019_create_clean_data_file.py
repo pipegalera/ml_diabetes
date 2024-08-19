@@ -1,5 +1,3 @@
-#python python "/root/dev/ml_diabetes/paper_replication/Dinh et al. (2019)/dinh_2019.py"
-
 from utils import create_intake_new_column, compile_data
 import pandas as pd
 import numpy as np
