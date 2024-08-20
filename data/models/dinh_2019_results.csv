@@ -1,0 +1,13 @@
+Case,Model,Training Time (seconds),AUC,Precision,Recall,F1
+Diabetes_Case_I,LogisticRegression,935.24,[0.889],[0.819],[0.584],[0.682]
+Diabetes_Case_I,RandomForestClassifier,65.00,[0.848],[0.763],[0.351],[0.481]
+Diabetes_Case_I,XGBClassifier,43.39,[0.9],[0.767],[0.614],[0.682]
+Diabetes_Case_I,AUC Weighted Ensemble,Training not needed,[0.907],[0.824],[0.558],[0.666]
+Diabetes_Case_II,LogisticRegression,846.43,[0.672],[0.473],[0.078],[0.134]
+Diabetes_Case_II,RandomForestClassifier,65.19,[0.859],[0.643],[0.242],[0.352]
+Diabetes_Case_II,XGBClassifier,39.33,[0.885],[0.637],[0.634],[0.636]
+Diabetes_Case_II,AUC Weighted Ensemble,Training not needed,[0.877],[0.685],[0.314],[0.43]
+CVD,LogisticRegression,506.95,[0.814],[0.604],[0.297],[0.399]
+CVD,RandomForestClassifier,75.72,[0.833],[0.663],[0.178],[0.281]
+CVD,XGBClassifier,40.75,[0.841],[0.641],[0.351],[0.454]
+CVD,AUC Weighted Ensemble,Training not needed,[0.839],[0.655],[0.269],[0.382]
