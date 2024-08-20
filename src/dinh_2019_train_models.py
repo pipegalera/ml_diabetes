@@ -8,8 +8,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.base import BaseEstimator
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
-from sklearnex import patch_sklearn
-patch_sklearn()
+from sklearn.kernel_approximation import Nystroem
 
 import pandas as pd
 import numpy as np
@@ -17,7 +16,7 @@ import pickle
 import time
 from scipy.stats import uniform, loguniform, randint
 import xgboost as xgb
-from utils import ConvertToCategory, MissingValueCategoryAs999,WeightedEnsemble
+from utils import ConvertToCategory, MissingValueCategoryAs999, WeightedEnsemble, find_model_name_from_pipeline
 import sys
 import argparse
 import os
@@ -78,10 +77,13 @@ logistic_regression = {
     }
 
 support_vector_machine = {
-    'estimator': [SVC(random_state=SEED, probability=True)],
-    'estimator__C': uniform(0.1, 5),
-    'estimator__gamma': loguniform(1e-3, 1),
-    'estimator__kernel': ['linear']
+    'estimator': [Pipeline([
+            ('nystroem', Nystroem(random_state=SEED)),
+            ('svm', SVC(probability=True, random_state=SEED))
+        ])],
+    'estimator__nystroem__n_components': randint(10, 500),
+    'estimator__nystroem__gamma': loguniform(1e-3, 1),
+    'estimator__svm__C': loguniform(1e-3, 1e3)
 }
 
 random_forest = {
@@ -141,6 +143,7 @@ def model_pipeline(X_train, y_train, model):
     )
     return grid
 
+
 def calculate_metrics(y_true, y_pred, y_pred_proba):
     return {
         'AUC': [roc_auc_score(y_true, y_pred_proba).round(3)],
@@ -158,19 +161,26 @@ def run_models(X_train, X_test,
     fitted_models = []
     all_metrics = []
 
+    case  = y_train.reset_index().columns[1]
+
     # Fit models
     for pipeline in model_pipelines:
-        print(f"Training model: {pipeline.param_distributions['estimator']}...")
+
+        model_name = find_model_name_from_pipeline(pipeline.param_distributions)
+
+        print(f"Training model: {model_name} predicting {case}...")
         start_time = time.time()
 
         pipeline.fit(X_train, y_train)
-        filename = f'model_{pipeline.param_distributions['estimator']}.pkl'
+
+        # Save models
+        filename = f'dinh_model_{case}_{model_name}.pkl'
         with open(MODEL_RESULTS_PATH + filename, 'wb') as file:
             pickle.dump(pipeline, file)
 
         end_time = time.time()
         training_time = end_time - start_time
-        print(f"Model {pipeline.param_distributions['estimator']} training time: {training_time:.2f} seconds")
+        print(f"Model {model_name} training time: {training_time:.2f} seconds")
 
         y_pred = pipeline.predict(X_test)
         y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
@@ -181,8 +191,8 @@ def run_models(X_train, X_test,
         fitted_models.append(pipeline)
 
         all_metrics.append({
-            'Case': y_train.reset_index().columns[1],
-            'Model': pipeline.param_distributions['estimator'],
+            'Case': case,
+            'Model': model_name,
             'Training Time (seconds)': f'{training_time:.2f}',
             **metrics
         })
@@ -200,7 +210,7 @@ def run_models(X_train, X_test,
 
     ensemble_metrics = calculate_metrics(y_test, y_pred, y_pred_proba)
     all_metrics.append({
-        'Case': y_train.reset_index().columns[1],
+        'Case': case,
         'Model': 'AUC Weighted Ensemble',
         'Training Time (seconds)': 'Training not needed',
         **ensemble_metrics
@@ -217,12 +227,13 @@ def main():
     for target in targets:
         X_train, X_test, y_train, y_test = stratified_split(df, target)
         pipeline_logistic_regression = model_pipeline(X_train, y_train, logistic_regression)
-        pipeline_logistic_svm = model_pipeline(X_train, y_train, support_vector_machine)
+        #pipeline_svm = model_pipeline(X_train, y_train, support_vector_machine)
         pipeline_random_forest = model_pipeline(X_train, y_train, random_forest)
         pipeline_xgb = model_pipeline(X_train, y_train, xgb)
 
-        model_pipelines = [pipeline_logistic_regression,
-                           pipeline_logistic_svm,
+        model_pipelines = [
+                           pipeline_logistic_regression,
+                           #pipeline_svm,
                            pipeline_random_forest,
                            pipeline_xgb]
 

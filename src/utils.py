@@ -11,6 +11,26 @@ load_dotenv()
 RAW_DATA_PATH = os.getenv("RAW_DATA_PATH")
 PROC_DATA_PATH = os.getenv("PROC_DATA_PATH")
 
+def find_model_name_from_pipeline(input_dict):
+    # Transform dict to string
+    dict_string = str(input_dict)
+
+    # Find the index of the first '('
+    paren_index = dict_string.find('(')
+
+    if paren_index == -1:
+        return "No parenthesis found in the string."
+
+    # Extract the substring before the first '('
+    before_paren = dict_string[:paren_index]
+
+    # Use regex to find all words (sequences of letters) before the parenthesis
+    words = re.findall(r'\b[a-zA-Z]+\b', before_paren)
+
+    if not words:
+        return "None"
+
+    return words[-1]
 
 def compile_data(variable_list,
                 RAW_DATA_PATH=RAW_DATA_PATH,
